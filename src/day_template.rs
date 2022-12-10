@@ -1,15 +1,12 @@
-use std::{cmp::max, fs::File, io::prelude::*, io::BufReader, path::Path};
+use std::{cmp::max, io::prelude::*, io::BufReader};
 
 use crate::{Day, Problem};
 
 impl Problem for Day<0> {
-    fn solve_file<P: AsRef<Path>>(path: P) -> Result<(), ()> {
-        let file = match File::open(path) {
-            Ok(it) => it,
-            Err(_) => return Err(()),
-        };
-        let reader = BufReader::new(file);
-
+    fn solve_buffer<T>(reader: BufReader<T>) -> Result<(), ()>
+    where
+        T: std::io::Read,
+    {
         let mut result = 0;
 
         // let results: Vec<_> = reader.lines().collect();

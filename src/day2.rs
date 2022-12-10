@@ -1,15 +1,12 @@
-use std::{fs::File, io::prelude::*, io::BufReader, path::Path};
+use std::{io::prelude::*, io::BufReader};
 
-use crate::{Day, Problem, Outcome};
+use crate::{Day, Outcome, Problem};
 
 impl Problem for Day<2> {
-    fn solve_file<P: AsRef<Path>>(path: P) -> Result<(), ()> {
-        let file = match File::open(path) {
-            Ok(it) => it,
-            Err(_) => return Err(()),
-        };
-        let reader = BufReader::new(file);
-
+    fn solve_buffer<T>(reader: BufReader<T>) -> Result<(), ()>
+    where
+        T: std::io::Read,
+    {
         #[derive(Clone, Copy, PartialEq, Eq)]
         enum Hands {
             Rock,
@@ -115,19 +112,16 @@ impl Problem for Day<2> {
 
                         let score1 = hand_score(me) + outcome_score(me, opp);
                         let score2 = hand_score(needed_hand) + outcome_score(needed_hand, opp);
-                        return Ok((score1, score2));
+                        Ok((score1, score2))
                     }
                     _ => Err(()),
                 }
             })
-            .map(|x| match x {
-                Ok(score) => score,
-                Err(_) => (0, 0),
-            })
+            .map(|x| x.unwrap_or((0, 0)))
             .fold((0, 0), |acc, x| {
                 let (acc0, acc1) = acc;
                 let (x0, x1) = x;
-                return (acc0 + x0, acc1 + x1);
+                (acc0 + x0, acc1 + x1)
             });
 
         let (total_score1, total_score2) = total_score;

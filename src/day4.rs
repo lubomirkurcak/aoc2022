@@ -1,50 +1,80 @@
-use std::{fs::File, io::prelude::*, io::BufReader, path::Path};
+use std::{io::prelude::*, io::BufReader, marker::PhantomData};
 
-use crate::{Day, Problem};
+use crate::Problem;
 
-impl Problem for Day<4> {
-    fn solve_file<P: AsRef<Path>>(path: P) -> Result<(), ()> {
-        let file = match File::open(path) {
-            Ok(it) => it,
-            Err(_) => return Err(()),
-        };
-        let reader = BufReader::new(file);
+trait IntervalRelation {
+    fn test(a0: i32, a1: i32, b0: i32, b1: i32) -> bool;
+    fn name() -> &'static str;
+}
 
-        // let results: Vec<_> = reader.lines().collect();
-        let mut full_overlap_count = 0;
-        let mut full_overlap_count_idea = 0;
-        let mut some_overlap_count = 0;
+pub struct OneFullyInsideAnotherSimple;
+pub struct OneFullyInsideAnotherOptimized;
+pub struct Overlap;
 
-        for line in reader.lines() {
-            let line = match line {
-                Ok(line) => line,
-                Err(_) => return Err(()),
-            };
+impl IntervalRelation for OneFullyInsideAnotherSimple {
+    fn test(a0: i32, a1: i32, b0: i32, b1: i32) -> bool {
+        (a0 >= b0 && a1 <= b1) || (b0 >= a0 && b1 <= a1)
+    }
 
-            let split: Vec<&str> = line.split(',').collect();
-            if let [a, b] = split[..] {
-                let a: Vec<&str> = a.split('-').collect();
+    fn name() -> &'static str {
+        "One fully overlaps the other"
+    }
+}
+impl IntervalRelation for OneFullyInsideAnotherOptimized {
+    fn test(a0: i32, a1: i32, b0: i32, b1: i32) -> bool {
+        (b0 - a0) * (b1 - a1) <= 0
+    }
 
-                if let [a0, a1] = a[..] {
-                    let b: Vec<&str> = b.split('-').collect();
+    fn name() -> &'static str {
+        "One fully overlaps the other, OPTIMIZED"
+    }
+}
+impl IntervalRelation for Overlap {
+    fn test(a0: i32, a1: i32, b0: i32, b1: i32) -> bool {
+        a1 >= b0 && a0 <= b1
+    }
 
-                    if let [b0, b1] = b[..] {
-                        if let Ok(a0) = a0.parse::<i32>() {
-                            if let Ok(a1) = a1.parse::<i32>() {
-                                if let Ok(b0) = b0.parse::<i32>() {
-                                    if let Ok(b1) = b1.parse::<i32>() {
-                                        // println!("[{}-{}] vs [{}-{}]", a0, a1, b0, b1);
+    fn name() -> &'static str {
+        "Any overlap"
+    }
+}
 
-                                        if (a0 >= b0 && a1 <= b1) || (b0 >= a0 && b1 <= a1) {
-                                            full_overlap_count += 1;
-                                        }
+pub struct Day4<T> {
+    phantom: PhantomData<T>,
+}
 
-                                        if (b0 - a0) * (b1 - a1) <= 0 {
-                                            full_overlap_count_idea += 1;
-                                        }
+impl<T> Problem for Day4<T>
+where
+    T: IntervalRelation,
+{
+    fn solve_buffer<U>(reader: BufReader<U>) -> Result<(), ()>
+    where
+        U: std::io::Read,
+    {
+        let tests_passed: Result<i32, ()> = reader
+            .lines()
+            .map(|line| -> Result<i32, ()> {
+                let line = match line {
+                    Ok(line) => line,
+                    Err(_) => return Err(()),
+                };
 
-                                        if a1 >= b0 && a0 <= b1 {
-                                            some_overlap_count += 1;
+                let split: Vec<&str> = line.split(',').collect();
+                if let [a, b] = split[..] {
+                    let a: Vec<&str> = a.split('-').collect();
+
+                    if let [a0, a1] = a[..] {
+                        let b: Vec<&str> = b.split('-').collect();
+
+                        if let [b0, b1] = b[..] {
+                            if let Ok(a0) = a0.parse::<i32>() {
+                                if let Ok(a1) = a1.parse::<i32>() {
+                                    if let Ok(b0) = b0.parse::<i32>() {
+                                        if let Ok(b1) = b1.parse::<i32>() {
+                                            return Ok(match T::test(a0, a1, b0, b1) {
+                                                true => 1,
+                                                false => 0,
+                                            });
                                         }
                                     }
                                 }
@@ -52,18 +82,13 @@ impl Problem for Day<4> {
                         }
                     }
                 }
-            } else {
-                return Err(());
-            }
+                Err(())
+            })
+            .sum();
+
+        match tests_passed {
+            Ok(tests_passed) => Ok(println!("{}: {}", T::name(), tests_passed)),
+            Err(_) => Err(()),
         }
-
-        println!("One fully overlaps other count: {}", full_overlap_count);
-        println!(
-            "One fully overlaps other count other formula: {}",
-            full_overlap_count_idea
-        );
-        println!("Any overlap count: {}", some_overlap_count);
-
-        Ok(())
     }
 }

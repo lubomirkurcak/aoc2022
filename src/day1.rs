@@ -1,15 +1,12 @@
-use std::{fs::File, io::{prelude::*, BufReader}, path::Path};
+use std::io::{prelude::*, BufReader};
 
 use crate::{Day, Problem};
 
 impl Problem for Day<1> {
-    fn solve_file<P: AsRef<Path>>(path: P) -> Result<(), ()> {
-        let file = match File::open(path) {
-            Ok(it) => it,
-            Err(_) => return Err(()),
-        };
-        let reader = BufReader::new(file);
-
+    fn solve_buffer<T>(reader: BufReader<T>) -> Result<(), ()>
+    where
+        T: std::io::Read,
+    {
         let mut sums = vec![];
         let mut current = 0;
 

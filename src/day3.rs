@@ -1,12 +1,6 @@
-use std::{
-    collections::{HashMap, HashSet},
-    fs::File,
-    io::prelude::*,
-    io::BufReader,
-    path::Path,
-};
+use std::{collections::HashSet, io::prelude::*, io::BufReader};
 
-use crate::{Day, Problem};
+use crate::Problem;
 
 fn item_priority(item: char) -> usize {
     match item {
@@ -16,15 +10,14 @@ fn item_priority(item: char) -> usize {
     }
 }
 
-impl Problem for Day<3> {
-    fn solve_file<P: AsRef<Path> + Copy>(path: P) -> Result<(), ()> {
-        let file = match File::open(path) {
-            Ok(it) => it,
-            Err(_) => return Err(()),
-        };
-
+pub struct Day3CommonItemInCompartments;
+impl Problem for Day3CommonItemInCompartments {
+    fn solve_buffer<T>(reader: BufReader<T>) -> Result<(), ()>
+    where
+        T: std::io::Read,
+    {
         let mut priority_sum = 0;
-        for line in BufReader::new(file).lines() {
+        for line in reader.lines() {
             let line = match line {
                 Ok(line) => line,
                 Err(_) => return Err(()),
@@ -50,17 +43,19 @@ impl Problem for Day<3> {
         }
 
         println!("Total duplicate priority sum: {}", priority_sum);
+        Ok(())
+    }
+}
 
-        // Part 2
-
+pub struct Day3CommonItemInGroups;
+impl Problem for Day3CommonItemInGroups {
+    fn solve_buffer<T>(reader: BufReader<T>) -> Result<(), ()>
+    where
+        T: std::io::Read,
+    {
         let mut badge_sum = 0;
 
-        let file = match File::open(path) {
-            Ok(it) => it,
-            Err(_) => return Err(()),
-        };
-
-        let mut lines = BufReader::new(file).lines();
+        let mut lines = reader.lines();
         while let (Some(Ok(line1)), Some(Ok(line2)), Some(Ok(line3))) =
             (lines.next(), lines.next(), lines.next())
         {
