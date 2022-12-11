@@ -4,6 +4,7 @@ use crate::{
     day3::{Day3CommonItemInCompartments, Day3CommonItemInGroups},
     day4::{Day4, OneFullyInsideAnotherOptimized, OneFullyInsideAnotherSimple, Overlap},
     day5::{CrateMover9000, CrateMover9001, Day5},
+    day6::Day6,
 };
 
 pub mod day1;
@@ -11,6 +12,7 @@ pub mod day2;
 pub mod day3;
 pub mod day4;
 pub mod day5;
+pub mod day6;
 pub mod day_template;
 
 fn main() {
@@ -26,6 +28,8 @@ fn main() {
     ProblemRunner::<Day4<Overlap>>::run("in4.txt");
     ProblemRunner::<Day5<CrateMover9000>>::run("in5.txt");
     ProblemRunner::<Day5<CrateMover9001>>::run("in5.txt");
+    ProblemRunner::<Day6<4>>::run("in6.txt");
+    ProblemRunner::<Day6<14>>::run("in6.txt");
 }
 
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
