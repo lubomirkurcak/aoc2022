@@ -1,6 +1,6 @@
-use std::{cmp::max, collections::HashMap, io::prelude::*, io::BufReader};
+use std::{io::prelude::*, io::BufReader};
 
-use crate::{Day, Problem};
+use crate::Problem;
 
 pub struct Day6<const T: usize>;
 
@@ -20,6 +20,9 @@ fn explicit_compare<const C: usize>(chars: Vec<char>) -> Option<usize> {
     None
 }
 
+// NOTE(lubo): We can easily shift window by more than 1! as is the case in the naive implementation.
+// Unfortunately the task was too small to notice. Or maybe the compiler is smart.
+#[allow(dead_code)]
 fn skip_as_far_as_possible_upon_finding_a_duplicate<const C: usize>(
     chars: Vec<char>,
 ) -> Option<usize> {

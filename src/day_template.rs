@@ -9,13 +9,15 @@ impl Problem for Day<0> {
     {
         let mut result = 0;
 
-        // let results: Vec<_> = reader.lines().collect();
+        // let lines: Vec<_> = reader.lines().collect();
 
         for line in reader.lines() {
             let line = match line {
                 Ok(line) => line,
                 Err(_) => return Err(()),
             };
+
+            // println!("{}", line);
 
             result = max(result, line.len());
         }
