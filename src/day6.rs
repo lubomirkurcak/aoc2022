@@ -22,7 +22,7 @@ fn explicit_compare<const C: usize>(chars: Vec<char>) -> Option<usize> {
 
 // NOTE(lubo): We can easily shift window by more than 1! as is the case in the naive implementation.
 // Unfortunately the task was too small to notice. Or maybe the compiler is smart.
-#[allow(dead_code)]
+#[cfg(disabled)]
 fn skip_as_far_as_possible_upon_finding_a_duplicate<const C: usize>(
     chars: Vec<char>,
 ) -> Option<usize> {
@@ -47,14 +47,6 @@ fn skip_as_far_as_possible_upon_finding_a_duplicate<const C: usize>(
     None
 }
 
-//fn hashmap(){
-// let mut latest_occurences = HashMap::new();
-// for (index, &char) in chars.iter().enumerate() {
-//     let latest = latest_occurences.entry(char).or_default();
-//     *latest = index;
-// }
-//}
-
 impl<const C: usize> Problem for Day6<C> {
     fn solve_buffer<T>(reader: BufReader<T>) -> Result<(), ()>
     where
@@ -63,7 +55,6 @@ impl<const C: usize> Problem for Day6<C> {
         let mut signal_starts_at = 0;
         let mut lines = reader.lines();
         if let Some(Ok(first)) = lines.next() {
-            println!("Line length: {}", first.len());
             let chars = first.chars().collect::<Vec<char>>();
             signal_starts_at = explicit_compare::<C>(chars).unwrap();
         }
