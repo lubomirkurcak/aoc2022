@@ -14,6 +14,7 @@ pub mod day4;
 pub mod day5;
 pub mod day6;
 pub mod day7;
+pub mod day8;
 pub mod day_template;
 
 fn main() {
@@ -31,8 +32,10 @@ fn main() {
     ProblemRunner::<Day5<CrateMover9001>>::run("in5.txt");
     ProblemRunner::<Day6<4>>::run("in6.txt");
     ProblemRunner::<Day6<14>>::run("in6.txt");
-    ProblemRunner::<Day<7>>::run("in7.txt");
     // ProblemRunner::<Day<7>>::run("in7_small.txt");
+    ProblemRunner::<Day<7>>::run("in7.txt");
+    ProblemRunner::<Day<8>>::run("in8_small.txt");
+    // ProblemRunner::<Day<8>>::run("in8.txt");
 }
 
 #[derive(PartialEq, Eq, PartialOrd, Ord)]

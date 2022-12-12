@@ -73,6 +73,7 @@ impl Display for FileTree {
 
 // NOTE(lubo): Simple sketch to cache file tree sizes. Basically a cache decorator.
 // Similarly to previous tasks, not really needed to solve the problem as it is already finishing pretty much instantly.
+#[allow(dead_code)]
 struct CachedFileTree {
     tree: FileTree,
     dir_size_cache: HashMap<String, usize>,
