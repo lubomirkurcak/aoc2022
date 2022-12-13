@@ -49,19 +49,15 @@ impl<T> Problem for Day5<T>
 where
     T: CrateMover,
 {
-    fn solve_buffer<U>(reader: BufReader<U>) -> Result<(), ()>
+    fn solve_buffer<U, W>(reader: BufReader<U>, writer: &mut W)
     where
         U: std::io::Read,
+        W: std::io::Write,
     {
         let mut stage = Stages::ReadingInitialState;
 
         let mut stacks: HashMap<usize, Vec<char>> = HashMap::new();
-        for line in reader.lines() {
-            let line = match line {
-                Ok(line) => line,
-                Err(_) => return Err(()),
-            };
-
+        for line in reader.lines().map(|x| x.unwrap()) {
             stage = match stage {
                 Stages::ReadingInitialState => {
                     if line.contains('[') {
@@ -112,14 +108,13 @@ where
             .map(|key| stacks.get(key).unwrap().last().unwrap())
             .collect();
 
-
         //let top_elements: String = stacks.values().map(|stack| stack.last().unwrap()).collect();
-        println!(
+        writeln!(
+            writer,
             "Using {}, Top items from each stack: {}",
             std::any::type_name::<T>(),
             top_elements
-        );
-
-        Ok(())
+        )
+        .unwrap();
     }
 }

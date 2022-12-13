@@ -47,9 +47,10 @@ impl<T> Problem for Day4<T>
 where
     T: IntervalRelation,
 {
-    fn solve_buffer<U>(reader: BufReader<U>) -> Result<(), ()>
+    fn solve_buffer<U, W>(reader: BufReader<U>, writer: &mut W)
     where
         U: std::io::Read,
+        W: std::io::Write,
     {
         let tests_passed: Result<i32, ()> = reader
             .lines()
@@ -67,18 +68,14 @@ where
                         let b: Vec<&str> = b.split('-').collect();
 
                         if let [b0, b1] = b[..] {
-                            if let Ok(a0) = a0.parse::<i32>() {
-                                if let Ok(a1) = a1.parse::<i32>() {
-                                    if let Ok(b0) = b0.parse::<i32>() {
-                                        if let Ok(b1) = b1.parse::<i32>() {
-                                            return Ok(match T::test(a0, a1, b0, b1) {
-                                                true => 1,
-                                                false => 0,
-                                            });
-                                        }
-                                    }
-                                }
-                            }
+                            let a0 = a0.parse::<i32>().unwrap();
+                            let a1 = a1.parse::<i32>().unwrap();
+                            let b0 = b0.parse::<i32>().unwrap();
+                            let b1 = b1.parse::<i32>().unwrap();
+                            return Ok(match T::test(a0, a1, b0, b1) {
+                                true => 1,
+                                false => 0,
+                            });
                         }
                     }
                 }
@@ -86,9 +83,8 @@ where
             })
             .sum();
 
-        match tests_passed {
-            Ok(tests_passed) => Ok(println!("{}: {}", T::name(), tests_passed)),
-            Err(_) => Err(()),
+        if let Ok(tests_passed) = tests_passed {
+            writeln!(writer, "{}: {}", T::name(), tests_passed).unwrap()
         }
     }
 }

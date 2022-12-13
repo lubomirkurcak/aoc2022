@@ -3,9 +3,10 @@ use std::{io::prelude::*, io::BufReader};
 use crate::{Day, Outcome, Problem};
 
 impl Problem for Day<2> {
-    fn solve_buffer<T>(reader: BufReader<T>) -> Result<(), ()>
+    fn solve_buffer<T, W>(reader: BufReader<T>, writer: &mut W)
     where
         T: std::io::Read,
+        W: std::io::Write,
     {
         #[derive(Clone, Copy, PartialEq, Eq)]
         enum Hands {
@@ -91,12 +92,8 @@ impl Problem for Day<2> {
 
         let total_score: (i32, i32) = reader
             .lines()
+            .map(|x| x.unwrap())
             .map(|line| {
-                let line = match line {
-                    Ok(line) => line,
-                    Err(_) => return Err(()),
-                };
-
                 let vec: Vec<&str> = line.split_ascii_whitespace().collect();
                 match vec[..] {
                     [first, second] => {
@@ -125,9 +122,7 @@ impl Problem for Day<2> {
             });
 
         let (total_score1, total_score2) = total_score;
-        println!("Total score 1: {}", total_score1);
-        println!("Total score 2: {}", total_score2);
-
-        Ok(())
+        writeln!(writer, "Total score 1: {}", total_score1).unwrap();
+        writeln!(writer, "Total score 2: {}", total_score2).unwrap();
     }
 }

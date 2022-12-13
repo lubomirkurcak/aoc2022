@@ -36,7 +36,7 @@ fn skip_as_far_as_possible_upon_finding_a_duplicate<const C: usize>(
             if last == ch {
                 let match_relative_difference = index_of_last - id;
                 let skip = C - match_relative_difference;
-                println!(
+                writeln!(
                     "Match found at relative difference: {}, Safe to skip {}",
                     match_relative_difference, skip
                 )
@@ -48,9 +48,10 @@ fn skip_as_far_as_possible_upon_finding_a_duplicate<const C: usize>(
 }
 
 impl<const C: usize> Problem for Day6<C> {
-    fn solve_buffer<T>(reader: BufReader<T>) -> Result<(), ()>
+    fn solve_buffer<T, W>(reader: BufReader<T>, writer: &mut W)
     where
         T: std::io::Read,
+        W: std::io::Write,
     {
         let mut signal_starts_at = 0;
         let mut lines = reader.lines();
@@ -59,8 +60,6 @@ impl<const C: usize> Problem for Day6<C> {
             signal_starts_at = explicit_compare::<C>(chars).unwrap();
         }
 
-        println!("Signal starts at: {}", signal_starts_at);
-
-        Ok(())
+        writeln!(writer, "Signal starts at: {}", signal_starts_at).unwrap();
     }
 }

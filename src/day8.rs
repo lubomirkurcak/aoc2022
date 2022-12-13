@@ -147,9 +147,10 @@ impl Array2D {
 }
 
 impl Problem for Day<8> {
-    fn solve_buffer<T>(reader: BufReader<T>) -> Result<(), ()>
+    fn solve_buffer<T, W>(reader: BufReader<T>, writer: &mut W)
     where
         T: std::io::Read,
+        W: std::io::Write,
     {
         let mut all_visible_trees = HashSet::new();
 
@@ -167,9 +168,9 @@ impl Problem for Day<8> {
             all_visible_trees.extend(visible2d);
         }
 
-        // println!("{}", array);
+        // writeln!("{}", array);
 
-        println!("Visible trees: {}", all_visible_trees.len());
+        writeln!(writer, "Visible trees: {}", all_visible_trees.len()).unwrap();
 
         let scenic_scores = (0..array.height)
             .flat_map(|y| {
@@ -180,7 +181,7 @@ impl Problem for Day<8> {
             .filter(|(_, _, score)| *score != 0)
             .collect::<Vec<(usize, usize, usize)>>();
 
-        // println!("{:?}", scenic_scores);
+        // writeln!("{:?}", scenic_scores);
 
         let scenic = scenic_scores
             .iter()
@@ -188,8 +189,7 @@ impl Problem for Day<8> {
             .unwrap();
         let (x, y, score) = scenic;
 
-        println!("Max scenic score: {}, at ({},{})", score, x, y);
+        writeln!(writer, "Max scenic score: {}, at ({},{})", score, x, y).unwrap();
 
-        Ok(())
     }
 }

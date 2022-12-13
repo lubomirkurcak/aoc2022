@@ -155,9 +155,10 @@ impl Default for FileTree {
 }
 
 impl Problem for Day<7> {
-    fn solve_buffer<T>(reader: BufReader<T>) -> Result<(), ()>
+    fn solve_buffer<T, W>(reader: BufReader<T>, writer: &mut W)
     where
         T: std::io::Read,
+        W: std::io::Write,
     {
         let mut tree = FileTree::new();
         let mut current_path = "".to_string();
@@ -219,7 +220,7 @@ impl Problem for Day<7> {
             }
         }
 
-        // println!("{}", tree);
+        // writeln!("{}", tree);
 
         let sum: usize = tree
             .immediate_directory_subdirectories
@@ -228,7 +229,7 @@ impl Problem for Day<7> {
             .map(|dir| tree.get_directory_size(dir).unwrap_or(0))
             .filter(|&x| x <= 100000)
             .sum();
-        println!("Sum of directory sizes of size at most 100k: {}", sum);
+        writeln!(writer, "Sum of directory sizes of size at most 100k: {}", sum).unwrap();
 
         let used_memory = tree.get_directory_size("").unwrap();
         let total_memory = 70000000;
@@ -243,11 +244,9 @@ impl Problem for Day<7> {
             .filter(|&x| x >= need_to_free)
             .min()
             .unwrap();
-        println!(
+        writeln!(writer, 
             "Size of smallest dir to free enough space: {}",
             smallest_such_dir
-        );
-
-        Ok(())
+        ).unwrap();
     }
 }

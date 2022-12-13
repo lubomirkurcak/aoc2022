@@ -12,17 +12,13 @@ fn item_priority(item: char) -> usize {
 
 pub struct Day3CommonItemInCompartments;
 impl Problem for Day3CommonItemInCompartments {
-    fn solve_buffer<T>(reader: BufReader<T>) -> Result<(), ()>
+    fn solve_buffer<T, W>(reader: BufReader<T>, writer: &mut W)
     where
         T: std::io::Read,
+        W: std::io::Write,
     {
         let mut priority_sum = 0;
-        for line in reader.lines() {
-            let line = match line {
-                Ok(line) => line,
-                Err(_) => return Err(()),
-            };
-
+        for line in reader.lines().map(|x| x.unwrap()) {
             let left = &line[0..line.len() / 2];
             let right = &line[line.len() / 2..];
 
@@ -42,16 +38,16 @@ impl Problem for Day3CommonItemInCompartments {
             }
         }
 
-        println!("Total duplicate priority sum: {}", priority_sum);
-        Ok(())
+        writeln!(writer, "Total duplicate priority sum: {}", priority_sum).unwrap();
     }
 }
 
 pub struct Day3CommonItemInGroups;
 impl Problem for Day3CommonItemInGroups {
-    fn solve_buffer<T>(reader: BufReader<T>) -> Result<(), ()>
+    fn solve_buffer<T, W>(reader: BufReader<T>, writer: &mut W)
     where
         T: std::io::Read,
+        W: std::io::Write,
     {
         let mut badge_sum = 0;
 
@@ -80,8 +76,6 @@ impl Problem for Day3CommonItemInGroups {
             }
         }
 
-        println!("Badge sum: {}", badge_sum);
-
-        Ok(())
+        writeln!(writer, "Badge sum: {}", badge_sum).unwrap();
     }
 }
