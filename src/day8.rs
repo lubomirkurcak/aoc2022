@@ -1,6 +1,6 @@
 use std::{
     collections::{HashMap, HashSet},
-    fmt::{write, Display},
+    fmt::Display,
     hash::Hash,
     io::prelude::*,
     io::BufReader,
@@ -61,6 +61,22 @@ where
     items.iter().map(|x: &X| (*x, const_y)).collect()
 }
 
+fn count_contiguous_less_than_values<I>(array: I, threshold: I::Item) -> usize
+where
+    I: Iterator,
+    I::Item: PartialOrd + Copy,
+{
+    let mut result = 0;
+    for val in array {
+        result += 1;
+        if val < threshold {
+        } else {
+            break;
+        }
+    }
+    result
+}
+
 struct Array2D {
     width: usize,
     height: usize,
@@ -71,7 +87,7 @@ struct Array2D {
 
 impl Display for Array2D {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for y in 0..self.height {
+        for y in (0..self.height).rev() {
             writeln!(
                 f,
                 "{}",
@@ -120,10 +136,11 @@ impl Array2D {
         let row = self.rows.get(&y).unwrap();
         let col = self.columns.get(&x).unwrap();
 
-        let right = visible_from_start(row[x..].iter()).len() - 1;
-        let left = visible_from_start(row[..=x].iter().rev()).len() - 1;
-        let up = visible_from_start(col[y..].iter()).len() - 1;
-        let down = visible_from_start(col[..=y].iter().rev()).len() - 1;
+        let current = &row[x];
+        let right = count_contiguous_less_than_values(row[x + 1..].iter(), current);
+        let left = count_contiguous_less_than_values(row[..x].iter().rev(), current);
+        let up = count_contiguous_less_than_values(col[y + 1..].iter(), current);
+        let down = count_contiguous_less_than_values(col[..y].iter().rev(), current);
 
         right * up * left * down
     }
@@ -150,27 +167,28 @@ impl Problem for Day<8> {
             all_visible_trees.extend(visible2d);
         }
 
-        println!("{}", array);
+        // println!("{}", array);
 
         println!("Visible trees: {}", all_visible_trees.len());
 
-        let max_scenic_score = (0..array.height).map(|y| {
-            (0..array.width)
-                .map(|x| (x, y, array.scenic_score(x, y)))
-                .collect::Vec<(usize,usize,usize)>()
-        });
-
-        let max_scenic_score = (0..array.height)
-            .map(|y| {
+        let scenic_scores = (0..array.height)
+            .flat_map(|y| {
                 (0..array.width)
                     .map(|x| (x, y, array.scenic_score(x, y)))
-                    .max_by(|&(_, _, a), &(_, _, b)| a.cmp(&b))
-                    .unwrap()
+                    .collect::<Vec<(usize, usize, usize)>>()
             })
-            .max_by(|&(_, _, a), &(_, _, b)| a.cmp(&b))
-            .unwrap();
+            .filter(|(_, _, score)| *score != 0)
+            .collect::<Vec<(usize, usize, usize)>>();
 
-        println!("Max scenic score: {:?}", max_scenic_score);
+        // println!("{:?}", scenic_scores);
+
+        let scenic = scenic_scores
+            .iter()
+            .max_by(|(_, _, a), (_, _, b)| a.cmp(b))
+            .unwrap();
+        let (x, y, score) = scenic;
+
+        println!("Max scenic score: {}, at ({},{})", score, x, y);
 
         Ok(())
     }
