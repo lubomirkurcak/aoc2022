@@ -218,9 +218,25 @@ mod tests {
     #[test]
     fn day10() {
         let mut writer = std::io::Cursor::new(vec![]);
-        Day::<10>::solve_file("in10.txt", &mut writer);
+        Day::<101>::solve_file("in10.txt", &mut writer);
         let output_raw = writer.into_inner();
         let output = std::str::from_utf8(&output_raw).unwrap();
         assert!(output.contains("14220"));
+    }
+
+    #[test]
+    fn day10_crt() {
+        let mut writer = std::io::Cursor::new(vec![]);
+        Day::<102>::solve_file("in10.txt", &mut writer);
+        let output_raw = writer.into_inner();
+        let output = std::str::from_utf8(&output_raw).unwrap();
+        assert!(output.contains(
+            r#"####.###...##..###..#....####.####.#..#.
+...#.#..#.#..#.#..#.#....#.......#.#..#.
+..#..#..#.#..#.#..#.#....###....#..#..#.
+.#...###..####.###..#....#.....#...#..#.
+#....#.#..#..#.#.#..#....#....#....#..#.
+####.#..#.#..#.#..#.####.#....####..##.."#
+        ));
     }
 }
