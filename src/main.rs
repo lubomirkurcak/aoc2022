@@ -3,6 +3,7 @@ use std::{fs::File, io::BufReader, path::Path};
 mod day1;
 mod day10;
 mod day11;
+mod day12;
 mod day2;
 mod day3;
 mod day4;
@@ -258,5 +259,15 @@ mod tests {
         let output_raw = writer.into_inner();
         let output = std::str::from_utf8(&output_raw).unwrap();
         assert!(output.contains("35270398814"));
+    }
+
+    #[test]
+    fn day12() {
+        let mut writer = std::io::Cursor::new(vec![]);
+        Day::<12>::solve_file("in12.txt", &mut writer);
+        let output_raw = writer.into_inner();
+        let output = std::str::from_utf8(&output_raw).unwrap();
+        assert!(output.contains("412"));
+        assert!(output.contains("402"));
     }
 }
