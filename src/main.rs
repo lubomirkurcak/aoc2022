@@ -1,16 +1,17 @@
 use std::{fs::File, io::BufReader, path::Path};
 
-pub mod day1;
-pub mod day10;
-pub mod day2;
-pub mod day3;
-pub mod day4;
-pub mod day5;
-pub mod day6;
-pub mod day7;
-pub mod day8;
-pub mod day9;
-pub mod day_template;
+mod day1;
+mod day10;
+mod day11;
+mod day2;
+mod day3;
+mod day4;
+mod day5;
+mod day6;
+mod day7;
+mod day8;
+mod day9;
+mod day_template;
 
 fn main() {
     println!("Hey!");
@@ -44,6 +45,7 @@ trait Problem {
 #[cfg(test)]
 mod tests {
     use crate::{
+        day11::Day11,
         day3::{Day3CommonItemInCompartments, Day3CommonItemInGroups},
         day4::{Day4, OneFullyInsideAnotherOptimized, OneFullyInsideAnotherSimple, Overlap},
         day5::{CrateMover9000, CrateMover9001, Day5},
@@ -216,7 +218,7 @@ mod tests {
     }
 
     #[test]
-    fn day10() {
+    fn day10_signal_strength() {
         let mut writer = std::io::Cursor::new(vec![]);
         Day::<101>::solve_file("in10.txt", &mut writer);
         let output_raw = writer.into_inner();
@@ -238,5 +240,23 @@ mod tests {
 #....#.#..#..#.#.#..#....#....#....#..#.
 ####.#..#.#..#.#..#.####.#....####..##.."#
         ));
+    }
+
+    #[test]
+    fn day11() {
+        let mut writer = std::io::Cursor::new(vec![]);
+        Day11::<3, 20>::solve_file("in11.txt", &mut writer);
+        let output_raw = writer.into_inner();
+        let output = std::str::from_utf8(&output_raw).unwrap();
+        assert!(output.contains("316888"));
+    }
+
+    #[test]
+    fn day11_big_stress() {
+        let mut writer = std::io::Cursor::new(vec![]);
+        Day11::<1, 10000>::solve_file("in11.txt", &mut writer);
+        let output_raw = writer.into_inner();
+        let output = std::str::from_utf8(&output_raw).unwrap();
+        assert!(output.contains("35270398814"));
     }
 }
