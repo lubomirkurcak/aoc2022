@@ -4,6 +4,7 @@ mod day1;
 mod day10;
 mod day11;
 mod day12;
+mod day13;
 mod day2;
 mod day3;
 mod day4;
@@ -269,5 +270,23 @@ mod tests {
         let output = std::str::from_utf8(&output_raw).unwrap();
         assert!(output.contains("412"));
         assert!(output.contains("402"));
+    }
+
+    #[test]
+    fn day13_already_correct_order() {
+        let mut writer = std::io::Cursor::new(vec![]);
+        Day::<1301>::solve_file("in13.txt", &mut writer);
+        let output_raw = writer.into_inner();
+        let output = std::str::from_utf8(&output_raw).unwrap();
+        assert!(output.contains("5623"));
+    }
+
+    #[test]
+    fn day13_delimiters() {
+        let mut writer = std::io::Cursor::new(vec![]);
+        Day::<1302>::solve_file("in13.txt", &mut writer);
+        let output_raw = writer.into_inner();
+        let output = std::str::from_utf8(&output_raw).unwrap();
+        assert!(output.contains("20570"));
     }
 }
