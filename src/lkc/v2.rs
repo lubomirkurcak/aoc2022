@@ -1,14 +1,24 @@
 use std::{
+    fmt::Display,
     ops::{Add, AddAssign, Mul, Sub, SubAssign},
     str::FromStr,
 };
 
-use super::geometric_traits::Movement4Directions;
+use super::{
+    geometric_traits::{EuclideanDistanceSquared, ManhattanDistance, Movement4Directions},
+    math::AbsoluteValue,
+};
 
-#[derive(Hash, Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Hash, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct V2<T> {
     pub x: T,
     pub y: T,
+}
+
+impl<T: Display> Display for V2<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "V2({}, {})", self.x, self.y)
+    }
 }
 
 #[derive(Debug)]
@@ -187,5 +197,43 @@ macro_rules! movement4directions {
 
 movement4directions!(usize, i32);
 
+impl<T> ManhattanDistance<V2<T>, T> for V2<T>
+where
+    T: Copy,
+    T: Add<Output = T>,
+    T: Sub<Output = T>,
+    T: AbsoluteValue,
+{
+    fn manhattan_distance(&self, other: &Self) -> T {
+        (other.x - self.x).abs().unwrap() + (other.y - self.y).abs().unwrap()
+    }
+}
+
+impl<T> EuclideanDistanceSquared<V2<T>, T> for V2<T>
+where
+    T: Copy,
+    T: Add<Output = T>,
+    T: Sub<Output = T>,
+    T: Mul<Output = T>,
+{
+    fn euclidean_distance_squared(&self, other: &Self) -> T {
+        let delta = *other - *self;
+        delta.inner(delta)
+    }
+}
+
 pub type V2i32 = V2<i32>;
 pub type V2usize = V2<usize>;
+
+#[cfg(test)]
+mod tests {
+    use crate::lkc::v2::V2;
+
+    #[test]
+    fn v2_eq() {
+        let a = V2::new(0, 0);
+        let b = V2::new(0, 0);
+        assert!(a == b);
+        assert_eq!(a, b);
+    }
+}

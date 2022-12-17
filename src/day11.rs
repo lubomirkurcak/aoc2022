@@ -1,5 +1,6 @@
 use std::{collections::HashMap, io::prelude::*, io::BufReader};
 
+use crate::lkc::math::*;
 use crate::Problem;
 
 type MonkeyId = usize;
@@ -136,11 +137,6 @@ impl Monkey {
 }
 
 pub struct Day11<const D: WorryLevel, const R: usize> {}
-
-use crate::lkc::math::gcd;
-use crate::lkc::math::Gcd;
-gcd!(WorryLevel);
-
 impl<const D: WorryLevel, const R: usize> Problem for Day11<D, R> {
     fn solve_buffer<T, W>(reader: BufReader<T>, writer: &mut W)
     where

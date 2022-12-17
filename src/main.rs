@@ -6,6 +6,7 @@ mod day11;
 mod day12;
 mod day13;
 mod day14;
+mod day15;
 mod day2;
 mod day3;
 mod day4;
@@ -19,8 +20,8 @@ mod lkc;
 
 fn main() {
     println!("Hey!");
-    let mut writer = std::io::Cursor::new(vec![]);
-    Day::<14>::solve_file("in14.txt", &mut writer);
+    // let mut writer = std::io::Cursor::new(vec![]);
+    // Day::<14>::solve_file("in14.txt", &mut writer);
 }
 
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
@@ -52,6 +53,7 @@ trait Problem {
 mod tests {
     use crate::{
         day11::Day11,
+        day15::{Day15, DefinitelyNoBeaconsAtLine, FindTheLoneOutOfRangeTile},
         day3::{Day3CommonItemInCompartments, Day3CommonItemInGroups},
         day4::{Day4, OneFullyInsideAnotherOptimized, OneFullyInsideAnotherSimple, Overlap},
         day5::{CrateMover9000, CrateMover9001, Day5},
@@ -292,5 +294,42 @@ mod tests {
         let output_raw = writer.into_inner();
         let output = std::str::from_utf8(&output_raw).unwrap();
         assert!(output.contains("20570"));
+    }
+
+    #[test]
+    fn day15_line2000000() {
+        let mut writer = std::io::Cursor::new(vec![]);
+        Day15::<DefinitelyNoBeaconsAtLine<2000000>>::solve_file("in15.txt", &mut writer);
+        let output_raw = writer.into_inner();
+        let output = std::str::from_utf8(&output_raw).unwrap();
+        assert!(output.contains("5125700"));
+    }
+
+    #[test]
+    #[ignore]
+    fn day15_out_of_range() {
+        let mut writer = std::io::Cursor::new(vec![]);
+        Day15::<FindTheLoneOutOfRangeTile<4000000>>::solve_file("in15.txt", &mut writer);
+        let output_raw = writer.into_inner();
+        let output = std::str::from_utf8(&output_raw).unwrap();
+        assert!(output.contains("11379394658764"));
+    }
+
+    #[test]
+    fn day15_small_line10() {
+        let mut writer = std::io::Cursor::new(vec![]);
+        Day15::<DefinitelyNoBeaconsAtLine<10>>::solve_file("in15_small.txt", &mut writer);
+        let output_raw = writer.into_inner();
+        let output = std::str::from_utf8(&output_raw).unwrap();
+        assert!(output.contains("26"));
+    }
+
+    #[test]
+    fn day15_small_out_of_range() {
+        let mut writer = std::io::Cursor::new(vec![]);
+        Day15::<FindTheLoneOutOfRangeTile<21>>::solve_file("in15_small.txt", &mut writer);
+        let output_raw = writer.into_inner();
+        let output = std::str::from_utf8(&output_raw).unwrap();
+        assert!(output.contains("56000011"));
     }
 }

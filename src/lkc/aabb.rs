@@ -2,7 +2,7 @@ use std::ops::Sub;
 
 use super::{geometric_traits::CoverObject, v2::V2};
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct AABB2<T> {
     pub min: V2<T>,
     pub max: V2<T>,
@@ -41,5 +41,17 @@ where
     }
     pub fn dim(&self) -> V2<T> {
         self.max - self.min
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::lkc::{aabb::AABB2, v2::V2};
+
+    #[test]
+    fn aabb_covering() {
+        let points = vec![V2::new(2, 0), V2::new(0, 2)];
+        let aabb = AABB2::covering(&points);
+        assert_eq!(aabb.unwrap(), AABB2::new(V2::new(0, 0), V2::new(2, 2)));
     }
 }

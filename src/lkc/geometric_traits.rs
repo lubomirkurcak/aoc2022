@@ -2,6 +2,15 @@ pub trait CoverObject<T> {
     fn cover(&mut self, object: &T);
 }
 
+// TODO(lubo): Is there a way to generalize distance?
+pub trait ManhattanDistance<T, O> {
+    fn manhattan_distance(&self, other: &Self) -> O;
+}
+
+pub trait EuclideanDistanceSquared<T, O> {
+    fn euclidean_distance_squared(&self, other: &Self) -> O;
+}
+
 pub trait IterateNeighbours
 where
     Self: std::marker::Sized,
