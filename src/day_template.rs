@@ -10,7 +10,7 @@ impl Problem for Day<0> {
     {
         let mut result = 0;
 
-        // let lines: Vec<_> = reader.lines().collect();
+        // let lines = reader.lines().map(|x| x.unwrap()).collect::<Vec<_>>();
 
         for line in reader.lines().map(|x| x.unwrap()) {
             // writeln!("{}", line);

@@ -137,29 +137,9 @@ impl Monkey {
 
 pub struct Day11<const D: WorryLevel, const R: usize> {}
 
-// NOTE(lubo): adapted https://rosettacode.org/wiki/Least_common_multiple#Rust
-macro_rules! gcd_generic {
-    ($ty:ident) => {
-        fn gcd(a: $ty, b: $ty) -> $ty {
-            match ((a, b), (a & 1, b & 1)) {
-                ((x, y), _) if x == y => y,
-                ((0, x), _) | ((x, 0), _) => x,
-                ((x, y), (0, 1)) | ((y, x), (1, 0)) => gcd(x >> 1, y),
-                ((x, y), (0, 0)) => gcd(x >> 1, y >> 1) << 1,
-                ((x, y), (1, 1)) => {
-                    let (x, y) = (std::cmp::min(x, y), std::cmp::max(x, y));
-                    gcd((y - x) >> 1, x)
-                }
-                _ => unreachable!(),
-            }
-        }
-        fn lcm(a: $ty, b: $ty) -> $ty {
-            a * (b / gcd(a, b))
-        }
-    };
-}
-
-gcd_generic!(WorryLevel);
+use crate::lkc::math::gcd;
+use crate::lkc::math::Gcd;
+gcd!(WorryLevel);
 
 impl<const D: WorryLevel, const R: usize> Problem for Day11<D, R> {
     fn solve_buffer<T, W>(reader: BufReader<T>, writer: &mut W)
@@ -171,7 +151,7 @@ impl<const D: WorryLevel, const R: usize> Problem for Day11<D, R> {
 
         let mut modulo = 1;
         for x in monkeys.values() {
-            modulo = lcm(modulo, x.division_test_value);
+            modulo = WorryLevel::lcm(modulo, x.division_test_value);
         }
         println!("Divisor LCM: {}", modulo);
         let straight_product: WorryLevel =
