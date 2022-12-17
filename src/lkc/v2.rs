@@ -1,7 +1,9 @@
 use std::{
-    ops::{Add, Mul, Sub},
+    ops::{Add, AddAssign, Mul, Sub, SubAssign},
     str::FromStr,
 };
+
+use super::geometric_traits::Movement4Directions;
 
 #[derive(Hash, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct V2<T> {
@@ -27,6 +29,17 @@ impl<T> V2<T> {
     }
 }
 
+impl<T> V2<T>
+where
+    T: Copy,
+    T: Add<Output = T>,
+    T: Mul<Output = T>,
+{
+    pub fn inner(&self, rhs: Self) -> T {
+        self.x * rhs.x + self.y * rhs.y
+    }
+}
+
 impl<T: Add<Output = T>> Add for V2<T> {
     type Output = Self;
 
@@ -37,10 +50,12 @@ impl<T: Add<Output = T>> Add for V2<T> {
         }
     }
 }
-// mismatched types
-//       expected struct `lkc::v2::V2<T>`
-// found associated type `<lkc::v2::V2<T> as std::ops::Sub>::Output`
-// consider constraining the associated type `<lkc::v2::V2<T> as std::ops::Sub>::Output` to `lkc::v2::V2<T>`
+impl<T: AddAssign> AddAssign for V2<T> {
+    fn add_assign(&mut self, rhs: Self) {
+        self.x += rhs.x;
+        self.y += rhs.y;
+    }
+}
 impl<T: Sub<Output = T>> Sub for V2<T> {
     type Output = V2<T>;
 
@@ -49,6 +64,12 @@ impl<T: Sub<Output = T>> Sub for V2<T> {
             x: self.x - rhs.x,
             y: self.y - rhs.y,
         }
+    }
+}
+impl<T: SubAssign> SubAssign for V2<T> {
+    fn sub_assign(&mut self, rhs: Self) {
+        self.x -= rhs.x;
+        self.y -= rhs.y;
     }
 }
 
@@ -128,5 +149,43 @@ impl<T: FromStr> FromStr for V2<T> {
     }
 }
 
-// pub type V2i32 = V2<i32>;
+macro_rules! movement4directions {
+    ($($t:ty),*) => {
+        $(
+        impl Movement4Directions for V2<$t> {
+            fn step_right(&self) -> Option<Self> {
+                if let Some(x) = self.x.checked_add(1) {
+                    Some(V2::new(x, self.y))
+                } else {
+                    None
+                }
+            }
+            fn step_up(&self) -> Option<Self> {
+                if let Some(y) = self.y.checked_add(1) {
+                    Some(V2::new(self.x, y))
+                } else {
+                    None
+                }
+            }
+            fn step_left(&self) -> Option<Self> {
+                if let Some(x) = self.x.checked_sub(1) {
+                    Some(V2::new(x, self.y))
+                } else {
+                    None
+                }
+            }
+            fn step_down(&self) -> Option<Self> {
+                if let Some(y) = self.y.checked_sub(1) {
+                    Some(V2::new(self.x, y))
+                } else {
+                    None
+                }
+            }
+        })*
+    };
+}
+
+movement4directions!(usize, i32);
+
+pub type V2i32 = V2<i32>;
 pub type V2usize = V2<usize>;

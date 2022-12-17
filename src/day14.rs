@@ -1,8 +1,9 @@
 use std::{io::prelude::*, io::BufReader, str::FromStr};
 
+use crate::lkc::array2d::Array2D;
 use crate::lkc::transformations::{Transform, Translation};
 
-use crate::lkc::geometric_traits::CoverObject;
+use crate::lkc::geometric_traits::{CoverObject, Movement4Directions};
 use crate::{
     lkc::{aabb::AABB2, v2::Scalar, v2::V2},
     Day, Problem,
@@ -14,29 +15,80 @@ impl Problem for Day<14> {
         T: std::io::Read,
         W: std::io::Write,
     {
-        let mut result = 0;
+        let result = 0;
 
-        let sand_source = V2::new(500, 0);
-        let mut aabb = AABB2::new(sand_source, sand_source);
+        let sand_coords = V2::new(500, 0);
+        let mut aabb = AABB2::new(sand_coords, sand_coords);
 
         let lines = reader.lines().map(|x| x.unwrap()).collect::<Vec<_>>();
-        for line in lines {
+        for line in lines.iter() {
             for coords in line.split("->") {
                 let coords = V2::<i32>::from_str(coords).unwrap();
                 aabb.cover(&coords);
-                println!("{:?}", coords);
             }
         }
-        println!("{:?}", aabb);
-        println!("{:?}", aabb.dim());
-        //let map_dim = aabb.dim() + V2::new(1, 1) + V2::new(1, 1) * 2;
-        let map_dim = aabb.dim() + V2::new(1, 1) + Scalar::new(2) * V2::new(1, 1);
-        println!("{:?}", map_dim);
-        let t = Translation::new(aabb.min - V2::new(1, 1));
-        println!("{:?}", t);
 
-        println!("{:?}", t.inverse_transform(aabb.min));
-        println!("{:?}", t.inverse_transform(aabb.max));
+        let floor_y = aabb.max.y + 2;
+        let sand_height = floor_y;
+        let floor_x_min = sand_coords.x - sand_height - 1;
+        let floor_x_max = sand_coords.x + sand_height + 1;
+        let floor_a = V2::new(floor_x_min, floor_y);
+        let floor_b = V2::new(floor_x_max, floor_y);
+        aabb.cover(&floor_a);
+        aabb.cover(&floor_b);
+
+        let map_dim = aabb.dim() + V2::new(1, 1) + Scalar::new(4) * V2::new(1, 1);
+        let t = Translation::new(aabb.min - V2::new(2, 2));
+
+        let mut map = Array2D::new(map_dim.x as usize, map_dim.y as usize, '.');
+        let sand_coords = t.inverse_transform(sand_coords);
+        map.set(sand_coords, '+');
+        let floor_a = t.inverse_transform(floor_a);
+        let floor_b = t.inverse_transform(floor_b);
+        map.draw_line(floor_a, floor_b, '#');
+
+        for line in lines.iter() {
+            let mut prev: Option<V2<_>> = None;
+            for coords in line.split("->") {
+                let coords = t.inverse_transform(V2::<i32>::from_str(coords).unwrap());
+                if let Some(prev) = prev {
+                    map.draw_line(prev, coords, '#');
+                }
+                prev = Some(coords);
+            }
+        }
+        println!("{}", map);
+
+        let mut came_to_rest = 0;
+        'outer: loop {
+            let mut sand = sand_coords;
+            loop {
+                let a = sand.step_up().unwrap();
+                match map.get(a) {
+                    Some(atile) => {
+                        let b = a.step_left().unwrap();
+                        let c = a.step_right().unwrap();
+                        if atile == &'.' {
+                            sand = a;
+                        } else if map.get(b).unwrap() == &'.' {
+                            sand = b;
+                        } else if map.get(c).unwrap() == &'.' {
+                            sand = c;
+                        } else {
+                            came_to_rest += 1;
+                            if sand == sand_coords {
+                                break 'outer;
+                            }
+                            map.set(sand, 'o');
+                            break;
+                        }
+                    }
+                    None => break 'outer,
+                }
+            }
+        }
+        println!("{}", map);
+        println!("{} grains of sand came to rest.", came_to_rest);
 
         writeln!(writer, "Result: {}", result).unwrap();
     }
