@@ -17,6 +17,7 @@ struct Rooms {
     room_ids: HashMap<String, RoomId>,
     room_names: Vec<String>,
     distances: HashMap<(RoomId, RoomId), i32>,
+    interesting_rooms: Vec<RoomId>,
 }
 
 impl Rooms {
@@ -108,18 +109,33 @@ impl Rooms {
                         .iter()
                         .map(|x| *room_ids.get(x).unwrap() as RoomId)
                         .collect(),
+                    floyd_warshall_connections: vec![],
                 },
             );
         });
+
+        let interesting_rooms = rooms
+            .iter()
+            .filter_map(|(k, v)| if v.pressure > 0 { Some(*k) } else { None })
+            .collect::<Vec<_>>();
 
         let mut rooms = Rooms {
             collection: rooms,
             room_ids,
             room_names,
             distances: HashMap::new(),
+            interesting_rooms,
         };
 
         rooms.calculate_shortest_paths();
+
+        for (k, room) in rooms.collection.iter_mut() {
+            for interesting_room in rooms.interesting_rooms.iter() {
+                let distance = *rooms.distances.get(&(*k, *interesting_room)).unwrap();
+                room.floyd_warshall_connections
+                    .push((*interesting_room, distance));
+            }
+        }
 
         rooms
     }
@@ -130,6 +146,7 @@ struct Room {
     // id: RoomId,
     pressure: i32,
     connections: Vec<RoomId>,
+    floyd_warshall_connections: Vec<(RoomId, i32)>,
 }
 
 #[derive(Debug, Hash, PartialEq, Eq, Clone, Copy)]
@@ -193,34 +210,6 @@ impl PointTrait for Point2 {
     }
 }
 
-impl Point2 {
-    pub fn initial(room_id: RoomId, rooms: &Rooms) -> Self {
-        Self {
-            me_p: room_id,
-            elephant_p: room_id,
-            time: 0,
-            open_valves: Self::initial_valve_state(rooms),
-            pressure_released: 0,
-        }
-    }
-
-    pub fn new(
-        me_p: RoomId,
-        elephant_p: RoomId,
-        time: i32,
-        open_valves: u64,
-        pressure_released: u64,
-    ) -> Self {
-        Self {
-            me_p,
-            elephant_p,
-            time,
-            open_valves,
-            pressure_released,
-        }
-    }
-}
-
 impl Point {
     pub fn initial(room_id: RoomId, rooms: &Rooms) -> Self {
         Self {
@@ -240,13 +229,11 @@ impl Point {
         }
     }
 
-    pub fn open_valve_value(&self, rooms: &Rooms) -> u64 {
-        if self.time_left() < 2 {
-            return 0;
-        }
-
-        let room = rooms.collection.get(&self.room_id).unwrap();
-        (room.pressure * (self.time_left() - 1)).try_into().unwrap()
+    pub fn open_valve_value(room_id: RoomId, time_left: i32, rooms: &Rooms) -> u64 {
+        let room = rooms.collection.get(&room_id).unwrap();
+        let pressure: u64 = room.pressure.try_into().unwrap();
+        let time_left: u64 = time_left.try_into().unwrap();
+        pressure * time_left
     }
 
     pub fn state_potential_overestimate(&self, rooms: &Rooms) -> u64 {
@@ -260,27 +247,39 @@ impl Point {
         }
         potential
     }
-
-    pub fn is_open(&self) -> bool {
-        self.open_valves & Self::get_valve_mask(self.room_id) > 0
-    }
-
-    pub fn open_valve(&self, rooms: &Rooms) -> Option<Self> {
-        if !self.is_open() {
-            let potential = self.open_valve_value(rooms);
-            if potential > 0 {
-                return Some(Self::new(
-                    self.room_id,
-                    self.time + 1,
-                    self.open_valves | Self::get_valve_mask(self.room_id),
-                    self.pressure_released + potential,
-                ));
-            }
-        }
-        None
-    }
 }
 
+// impl IterateNeighbours for Point {
+//     type Context = Exploration<Self, Rooms>;
+//
+//     fn neighbours(&self, context: &Self::Context) -> Vec<Self> {
+//         let mut options = vec![];
+//         let rooms = &context.structure;
+//
+//         if self.time_left() > 0 {
+//             rooms
+//                 .collection
+//                 .get(&self.room_id)
+//                 .unwrap()
+//                 .connections
+//                 .iter()
+//                 .for_each(|p| {
+//                     options.push(Self::new(
+//                         *p,
+//                         self.time + rooms.distances.get(&(self.room_id, *p)).unwrap(),
+//                         self.open_valves,
+//                         self.pressure_released,
+//                     ))
+//                 });
+//
+//             if let Some(open) = self.open_valve(rooms) {
+//                 options.push(open);
+//             }
+//         }
+//
+//         options
+//     }
+// }
 impl IterateNeighbours for Point {
     type Context = Exploration<Self, Rooms>;
 
@@ -293,20 +292,25 @@ impl IterateNeighbours for Point {
                 .collection
                 .get(&self.room_id)
                 .unwrap()
-                .connections
+                .floyd_warshall_connections
                 .iter()
-                .for_each(|p| {
-                    options.push(Self::new(
-                        *p,
-                        self.time + 1,
-                        self.open_valves,
-                        self.pressure_released,
-                    ))
+                .for_each(|(p, distance)| {
+                    let valve_open_time = self.time + distance + 1;
+                    let valve_open_time_left = 30 - valve_open_time;
+                    if valve_open_time_left > 0 {
+                        let valve_open_value =
+                            Self::open_valve_value(*p, valve_open_time_left, rooms);
+                        let new_valve_state = self.open_valves | Self::get_valve_mask(*p);
+                        if new_valve_state != self.open_valves && valve_open_time <= 30 {
+                            options.push(Self::new(
+                                *p,
+                                valve_open_time,
+                                new_valve_state,
+                                self.pressure_released + valve_open_value,
+                            ))
+                        }
+                    }
                 });
-
-            if let Some(open) = self.open_valve(rooms) {
-                options.push(open);
-            }
         }
 
         options
