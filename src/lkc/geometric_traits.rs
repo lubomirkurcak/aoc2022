@@ -15,8 +15,9 @@ pub trait IterateNeighbours
 where
     Self: std::marker::Sized,
 {
+    type Context;
     // fn neighbours(&self) -> dyn Iterator<Item = Self>;
-    fn neighbours(&self) -> Vec<Self>;
+    fn neighbours(&self, context: &Self::Context) -> Vec<Self>;
 }
 
 pub trait Movement4Directions
@@ -35,7 +36,7 @@ where
 }
 
 impl<T: Movement4Directions> IterateNeighbours for T {
-    fn neighbours(&self) -> Vec<Self> {
+    fn neighbours(&self, _context: &Self::Context) -> Vec<Self> {
         let mut results = vec![];
         if let Some(a) = self.step_right() {
             results.push(a);
@@ -51,4 +52,6 @@ impl<T: Movement4Directions> IterateNeighbours for T {
         }
         results
     }
+
+    type Context = ();
 }

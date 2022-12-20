@@ -45,7 +45,7 @@ impl Exploration {
         let mut open = vec![];
 
         if let Some(&from) = self.map.get(p) {
-            for p in p.neighbours() {
+            for p in p.neighbours(&()) {
                 if let Some(&to) = self.map.get(p) {
                     if (self.traversable)(from, to) {
                         open.push(p);
