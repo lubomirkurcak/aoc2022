@@ -1,11 +1,16 @@
+use std::{
+    iter::Sum,
+    ops::{Add, Sub},
+};
+
 use super::math::{ExclusiveMax, InclusiveMin, Interval};
 
 #[derive(Debug)]
-pub struct IntervalSet {
-    pub intervals: Vec<std::ops::Range<i32>>,
+pub struct IntervalSet<T> {
+    pub intervals: Vec<std::ops::Range<T>>,
 }
 
-impl IntervalSet {
+impl<T: Copy + Ord> IntervalSet<T> {
     pub fn new() -> Self {
         Self { intervals: vec![] }
     }
@@ -83,7 +88,7 @@ impl IntervalSet {
     //     todo!();
     // }
 
-    pub fn intersect(&mut self, interval: std::ops::Range<i32>) {
+    pub fn intersect(&mut self, interval: std::ops::Range<T>) {
         self.intervals = self
             .intervals
             .iter()
@@ -91,7 +96,7 @@ impl IntervalSet {
             .collect();
     }
 
-    pub fn union(&mut self, interval: std::ops::Range<i32>) {
+    pub fn union(&mut self, interval: std::ops::Range<T>) {
         if *interval.inclusive_min() >= *interval.exclusive_max() {
             return;
         }
@@ -140,12 +145,11 @@ impl IntervalSet {
 
         if index > 0 {
             let pre = self.intervals[index - 1].interval_union(&interval);
-            if pre.is_some() {
-                let mut interval = pre.unwrap();
+            if let Some(mut interval) = pre {
                 if index < self.intervals.len() {
                     let all_three = self.intervals[index].interval_union(&interval);
-                    if all_three.is_some() {
-                        interval = all_three.unwrap();
+                    if let Some(all_three) = all_three {
+                        interval = all_three;
                         self.intervals.remove(index);
                     }
                 }
@@ -157,16 +161,25 @@ impl IntervalSet {
 
         if index < self.intervals.len() {
             let post = self.intervals[index].interval_union(&interval);
-            if post.is_some() {
-                self.intervals[index] = post.unwrap();
+            if let Some(post) = post {
+                self.intervals[index] = post;
                 return;
             }
         }
 
         self.intervals.insert(index, interval);
     }
+}
 
-    pub fn bounds(&self) -> Option<std::ops::Range<i32>> {
+impl<T: Copy + Add<Output = T> + Sub<Output = T> + Sum> IntervalSet<T> {
+    pub fn measure(&self) -> T {
+        self.intervals
+            .iter()
+            .map(|x| *x.exclusive_max() - *x.inclusive_min())
+            .sum()
+    }
+
+    pub fn bounds(&self) -> Option<std::ops::Range<T>> {
         let count = self.intervals.len();
         if count > 0 {
             Some(*self.intervals[0].inclusive_min()..*self.intervals[count - 1].exclusive_max())
@@ -185,12 +198,5 @@ impl IntervalSet {
         }
 
         Self { intervals: negated }
-    }
-
-    pub fn measure(&self) -> i32 {
-        self.intervals
-            .iter()
-            .map(|x| *x.exclusive_max() - *x.inclusive_min())
-            .sum()
     }
 }

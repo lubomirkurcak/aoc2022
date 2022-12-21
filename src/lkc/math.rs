@@ -107,7 +107,7 @@ impl<T> ExclusiveMax<T> for std::ops::Range<T> {
         &self.end
     }
 }
-impl Interval for std::ops::Range<i32> {
+impl<T: Copy + Ord> Interval for std::ops::Range<T> {
     fn interval_intersection(&self, other: &Self) -> Option<Self> {
         let mut a0 = *self.inclusive_min();
         let mut a1 = *self.exclusive_max();
