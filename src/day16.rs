@@ -144,6 +144,8 @@ pub trait PointTrait
 where
     Self: Sized,
 {
+    fn get_total_time() -> i32;
+
     fn initial_valve_state(rooms: &Rooms) -> u64 {
         let mut initial_state = 0;
         for (k, v) in rooms.collection.iter() {
@@ -170,17 +172,46 @@ where
 
     fn get_open_valves(&self) -> u64;
 
-    fn state_potential_overestimate(&self, rooms: &Rooms) -> u64 {
-        let mut potential = 0u64;
-        let time_left = self.time_left();
-        if time_left > 0 {
-            for (k, v) in rooms.collection.iter() {
+    fn get_releasable_pressures(&self, rooms: &Rooms) -> Vec<i32> {
+        rooms
+            .collection
+            .iter()
+            .filter_map(|(k, v)| {
                 let mask = 1u64 << k;
                 if (self.get_open_valves() & mask) == 0 {
-                    potential += (v.pressure * time_left) as u64;
+                    return Some(v.pressure);
                 }
-            }
+                None
+            })
+            .collect()
+    }
+
+    fn state_potential_overestimate_v0(&self, rooms: &Rooms) -> u64 {
+        let mut potential = 0u64;
+        let time_left = self.time_left();
+        let time_left = time_left - 1;
+        if time_left > 0 {
+            let sum: i32 = self.get_releasable_pressures(rooms).iter().sum();
+            potential = sum as u64 * time_left as u64;
         }
         potential
+    }
+
+    fn state_potential_overestimate_v1(&self, rooms: &Rooms) -> u64 {
+        let mut res = 0;
+        let mut tl = self.time_left() - 1;
+        let mut ps = self.get_releasable_pressures(rooms);
+        ps.sort();
+        ps.reverse();
+        for p in ps.iter() {
+            res += tl * p;
+            tl -= 1;
+        }
+
+        if res > 0 {
+            res as u64
+        } else {
+            0
+        }
     }
 }

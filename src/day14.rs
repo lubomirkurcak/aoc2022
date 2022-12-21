@@ -6,17 +6,17 @@ use crate::lkc::transformations::{Transform, Translation};
 use crate::lkc::geometric_traits::{CoverObject, Movement4Directions};
 use crate::{
     lkc::{aabb::AABB2, v2::Scalar, v2::V2},
-    Day, Problem,
+    Problem,
 };
 
-impl Problem for Day<14> {
+pub struct Day14<const C: bool>;
+
+impl<const C: bool> Problem for Day14<C> {
     fn solve_buffer<T, W>(reader: BufReader<T>, writer: &mut W)
     where
         T: std::io::Read,
         W: std::io::Write,
     {
-        let result = 0;
-
         let sand_coords = V2::new(500, 0);
         let mut aabb = AABB2::new(sand_coords, sand_coords);
 
@@ -45,7 +45,9 @@ impl Problem for Day<14> {
         map.set(sand_coords, '+');
         let floor_a = t.inverse_transform(floor_a);
         let floor_b = t.inverse_transform(floor_b);
-        map.draw_line(floor_a, floor_b, '#');
+        if C {
+            map.draw_line(floor_a, floor_b, '#');
+        }
 
         for line in lines.iter() {
             let mut prev: Option<V2<_>> = None;
@@ -57,7 +59,7 @@ impl Problem for Day<14> {
                 prev = Some(coords);
             }
         }
-        println!("{}", map);
+        // println!("{}", map);
 
         let mut came_to_rest = 0;
         'outer: loop {
@@ -87,9 +89,9 @@ impl Problem for Day<14> {
                 }
             }
         }
-        println!("{}", map);
+        // println!("{}", map);
         println!("{} grains of sand came to rest.", came_to_rest);
 
-        writeln!(writer, "Result: {}", result).unwrap();
+        write!(writer, "{}", came_to_rest).unwrap();
     }
 }

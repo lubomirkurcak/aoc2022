@@ -9,8 +9,6 @@ use crate::{
     Day, Problem,
 };
 
-// type RoomId = i32;
-
 #[derive(Debug, Hash, PartialEq, Eq, Clone, Copy)]
 struct Point {
     room_id: RoomId,
@@ -57,11 +55,15 @@ impl PointKeyValue for Point {
 
 impl PointTrait for Point {
     fn time_left(&self) -> i32 {
-        30 - self.time
+        Self::get_total_time() - self.time
     }
 
     fn get_open_valves(&self) -> u64 {
         self.open_valves
+    }
+
+    fn get_total_time() -> i32 {
+        30
     }
 }
 
@@ -72,6 +74,24 @@ impl Point {
             time: 0,
             open_valves: Self::initial_valve_state(rooms),
             pressure_released: 0,
+        }
+    }
+
+    fn state_potential_overestimate(&self, rooms: &Rooms) -> u64 {
+        let mut res = 0;
+        let mut tl = self.time_left();
+        let mut ps = self.get_releasable_pressures(rooms);
+        ps.sort();
+        ps.reverse();
+        for p in ps.iter() {
+            res += tl * p;
+            tl -= 2;
+        }
+
+        if res > 0 {
+            res as u64
+        } else {
+            0
         }
     }
 }
@@ -92,12 +112,12 @@ impl IterateNeighbours for Point {
                 .iter()
                 .for_each(|(p, distance)| {
                     let valve_open_time = self.time + distance + 1;
-                    let valve_open_time_left = 30 - valve_open_time;
+                    let valve_open_time_left = Self::get_total_time() - valve_open_time;
                     if valve_open_time_left > 0 {
                         let valve_open_value =
                             Self::open_valve_value(*p, valve_open_time_left, rooms);
                         let new_valve_state = self.open_valves | Self::get_valve_mask(*p);
-                        if new_valve_state != self.open_valves && valve_open_time <= 30 {
+                        if new_valve_state != self.open_valves {
                             options.push(Self {
                                 room_id: *p,
                                 time: valve_open_time,
@@ -144,8 +164,6 @@ impl Problem for Day<1601> {
             |_p| true,
         );
 
-        println!("MAX PRESSURE {}", max_pressure_released);
-
-        writeln!(writer, "Result: {}", max_pressure_released).unwrap();
+        writeln!(writer, "{}", max_pressure_released).unwrap();
     }
 }

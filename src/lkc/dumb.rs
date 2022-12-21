@@ -11,8 +11,8 @@ pub trait Bag<T> {
     }
 }
 
-struct StackBag<T>(Vec<T>);
-struct QueueBag<T>(VecDeque<T>);
+pub struct StackBag<T>(Vec<T>);
+pub struct QueueBag<T>(VecDeque<T>);
 
 impl<T> Bag<T> for StackBag<T> {
     fn put(&mut self, t: T) {

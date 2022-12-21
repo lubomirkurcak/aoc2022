@@ -23,11 +23,16 @@ struct Point2 {
 
 impl PointTrait for Point2 {
     fn time_left(&self) -> i32 {
-        26 - std::cmp::min(self.elephant_finish_task_time, self.me_finish_task_time)
+        Self::get_total_time()
+            - std::cmp::min(self.elephant_finish_task_time, self.me_finish_task_time)
     }
 
     fn get_open_valves(&self) -> u64 {
         self.open_valves
+    }
+
+    fn get_total_time() -> i32 {
+        26
     }
 }
 
@@ -40,6 +45,32 @@ impl Point2 {
             elephant_p: room_id,
             me_finish_task_time: 0,
             elephant_finish_task_time: 0,
+        }
+    }
+
+    fn state_potential_overestimate(&self, rooms: &Rooms) -> u64 {
+        let mut res = 0;
+        // NOTE(lubo): Not TOTALLY sure about these -1's here. They could underestimate in some cases. It worked for our input though.
+        let mut tl0 = Self::get_total_time() - self.me_finish_task_time - 1;
+        let mut tl1 = Self::get_total_time() - self.elephant_finish_task_time - 1;
+        let mut ps = self.get_releasable_pressures(rooms);
+        ps.sort();
+        ps.reverse();
+
+        for p in ps {
+            if tl0 > tl1 {
+                res += p * tl0;
+                tl0 -= 2;
+            } else {
+                res += p * tl1;
+                tl1 -= 2;
+            }
+        }
+
+        if res > 0 {
+            res as u64
+        } else {
+            0
         }
     }
 }
@@ -95,7 +126,7 @@ impl IterateNeighbours for Point2 {
                 .iter()
                 .for_each(|(p, distance)| {
                     let valve_open_time = time + distance + 1;
-                    let valve_open_time_left = 26 - valve_open_time;
+                    let valve_open_time_left = Self::get_total_time() - valve_open_time;
                     if valve_open_time_left > 0 {
                         let new_valve_state = self.open_valves | Self::get_valve_mask(*p);
                         if new_valve_state != self.open_valves {
@@ -146,7 +177,7 @@ impl Problem for Day<1602> {
                 }
 
                 if p.pressure_released > max_pressure_released {
-                    println!("New best PRESSURE {} @ {:?}", max_pressure_released, p);
+                    // println!("New best PRESSURE {} @ {:?}", max_pressure_released, p);
                     max_pressure_released = p.pressure_released;
                 }
 
@@ -155,8 +186,6 @@ impl Problem for Day<1602> {
             |_p| true,
         );
 
-        println!("MAX ELEPHANT PRESSURE {}", max_pressure_released);
-
-        writeln!(writer, "Result: {}", max_pressure_released).unwrap();
+        writeln!(writer, "{}", max_pressure_released).unwrap();
     }
 }

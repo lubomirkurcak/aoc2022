@@ -22,13 +22,10 @@ mod day_template;
 mod lkc;
 
 fn main() {
+    let mut writer = std::io::Cursor::new(vec![]);
     println!("Hey!");
     let t0 = std::time::Instant::now();
-    let mut writer = std::io::Cursor::new(vec![]);
-
-    // Day::<14>::solve_file("in14.txt", &mut writer);
-    Day::<1602>::solve_file("in16.txt", &mut writer);
-
+    Day::<0>::solve_file("in14.txt", &mut writer);
     println!("Time: {:?}", t0.elapsed());
 }
 
@@ -61,6 +58,7 @@ trait Problem {
 mod tests {
     use crate::{
         day11::Day11,
+        day14::Day14,
         day15::{Day15, DefinitelyNoBeaconsAtLine, FindTheLoneOutOfRangeTile},
         day3::{Day3CommonItemInCompartments, Day3CommonItemInGroups},
         day4::{Day4, OneFullyInsideAnotherOptimized, OneFullyInsideAnotherSimple, Overlap},
@@ -87,7 +85,7 @@ mod tests {
         let mut writer = std::io::Cursor::new(vec![]);
         Day::<1>::solve_file("in1.txt", &mut writer);
         let output_raw = writer.into_inner();
-        let output = std::str::from_utf8(&output_raw).unwrap();
+        let output = std::str::from_utf8(&output_raw).unwrap().trim();
         assert!(output.contains("69528"));
         assert!(output.contains("206152"));
     }
@@ -97,7 +95,7 @@ mod tests {
         let mut writer = std::io::Cursor::new(vec![]);
         Day::<2>::solve_file("in2.txt", &mut writer);
         let output_raw = writer.into_inner();
-        let output = std::str::from_utf8(&output_raw).unwrap();
+        let output = std::str::from_utf8(&output_raw).unwrap().trim();
         assert!(output.contains("13052"));
         assert!(output.contains("13693"));
     }
@@ -107,7 +105,7 @@ mod tests {
         let mut writer = std::io::Cursor::new(vec![]);
         Day3CommonItemInCompartments::solve_file("in3.txt", &mut writer);
         let output_raw = writer.into_inner();
-        let output = std::str::from_utf8(&output_raw).unwrap();
+        let output = std::str::from_utf8(&output_raw).unwrap().trim();
         assert!(output.contains("7908"));
     }
 
@@ -116,7 +114,7 @@ mod tests {
         let mut writer = std::io::Cursor::new(vec![]);
         Day3CommonItemInGroups::solve_file("in3.txt", &mut writer);
         let output_raw = writer.into_inner();
-        let output = std::str::from_utf8(&output_raw).unwrap();
+        let output = std::str::from_utf8(&output_raw).unwrap().trim();
         assert!(output.contains("2838"));
     }
 
@@ -125,7 +123,7 @@ mod tests {
         let mut writer = std::io::Cursor::new(vec![]);
         Day4::<OneFullyInsideAnotherSimple>::solve_file("in4.txt", &mut writer);
         let output_raw = writer.into_inner();
-        let output = std::str::from_utf8(&output_raw).unwrap();
+        let output = std::str::from_utf8(&output_raw).unwrap().trim();
         assert!(output.contains("450"));
     }
 
@@ -134,7 +132,7 @@ mod tests {
         let mut writer = std::io::Cursor::new(vec![]);
         Day4::<OneFullyInsideAnotherOptimized>::solve_file("in4.txt", &mut writer);
         let output_raw = writer.into_inner();
-        let output = std::str::from_utf8(&output_raw).unwrap();
+        let output = std::str::from_utf8(&output_raw).unwrap().trim();
         assert!(output.contains("450"));
     }
 
@@ -143,7 +141,7 @@ mod tests {
         let mut writer = std::io::Cursor::new(vec![]);
         Day4::<Overlap>::solve_file("in4.txt", &mut writer);
         let output_raw = writer.into_inner();
-        let output = std::str::from_utf8(&output_raw).unwrap();
+        let output = std::str::from_utf8(&output_raw).unwrap().trim();
         assert!(output.contains("837"));
     }
 
@@ -152,7 +150,7 @@ mod tests {
         let mut writer = std::io::Cursor::new(vec![]);
         Day5::<CrateMover9000>::solve_file("in5.txt", &mut writer);
         let output_raw = writer.into_inner();
-        let output = std::str::from_utf8(&output_raw).unwrap();
+        let output = std::str::from_utf8(&output_raw).unwrap().trim();
         assert!(output.contains("RLFNRTNFB"));
     }
 
@@ -161,7 +159,7 @@ mod tests {
         let mut writer = std::io::Cursor::new(vec![]);
         Day5::<CrateMover9001>::solve_file("in5.txt", &mut writer);
         let output_raw = writer.into_inner();
-        let output = std::str::from_utf8(&output_raw).unwrap();
+        let output = std::str::from_utf8(&output_raw).unwrap().trim();
         assert!(output.contains("MHQTLJRLB"));
     }
 
@@ -170,7 +168,7 @@ mod tests {
         let mut writer = std::io::Cursor::new(vec![]);
         Day6::<4>::solve_file("in6.txt", &mut writer);
         let output_raw = writer.into_inner();
-        let output = std::str::from_utf8(&output_raw).unwrap();
+        let output = std::str::from_utf8(&output_raw).unwrap().trim();
         assert!(output.contains("1142"));
     }
 
@@ -179,7 +177,7 @@ mod tests {
         let mut writer = std::io::Cursor::new(vec![]);
         Day6::<14>::solve_file("in6.txt", &mut writer);
         let output_raw = writer.into_inner();
-        let output = std::str::from_utf8(&output_raw).unwrap();
+        let output = std::str::from_utf8(&output_raw).unwrap().trim();
         assert!(output.contains("2803"));
     }
 
@@ -188,7 +186,7 @@ mod tests {
         let mut writer = std::io::Cursor::new(vec![]);
         Day::<7>::solve_file("in7_small.txt", &mut writer);
         let output_raw = writer.into_inner();
-        let output = std::str::from_utf8(&output_raw).unwrap();
+        let output = std::str::from_utf8(&output_raw).unwrap().trim();
         assert!(output.contains("95437"));
         assert!(output.contains("24933642"));
     }
@@ -198,7 +196,7 @@ mod tests {
         let mut writer = std::io::Cursor::new(vec![]);
         Day::<7>::solve_file("in7.txt", &mut writer);
         let output_raw = writer.into_inner();
-        let output = std::str::from_utf8(&output_raw).unwrap();
+        let output = std::str::from_utf8(&output_raw).unwrap().trim();
         assert!(output.contains("1477771"));
         assert!(output.contains("3579501"));
     }
@@ -208,7 +206,7 @@ mod tests {
         let mut writer = std::io::Cursor::new(vec![]);
         Day::<8>::solve_file("in8_small.txt", &mut writer);
         let output_raw = writer.into_inner();
-        let output = std::str::from_utf8(&output_raw).unwrap();
+        let output = std::str::from_utf8(&output_raw).unwrap().trim();
         assert!(output.contains("21"));
         assert!(output.contains('8'));
     }
@@ -218,7 +216,7 @@ mod tests {
         let mut writer = std::io::Cursor::new(vec![]);
         Day::<8>::solve_file("in8.txt", &mut writer);
         let output_raw = writer.into_inner();
-        let output = std::str::from_utf8(&output_raw).unwrap();
+        let output = std::str::from_utf8(&output_raw).unwrap().trim();
         assert!(output.contains("1705"));
         assert!(output.contains("371200"));
     }
@@ -228,7 +226,7 @@ mod tests {
         let mut writer = std::io::Cursor::new(vec![]);
         Day::<9>::solve_file("in9.txt", &mut writer);
         let output_raw = writer.into_inner();
-        let output = std::str::from_utf8(&output_raw).unwrap();
+        let output = std::str::from_utf8(&output_raw).unwrap().trim();
         assert!(output.contains("6197"));
         assert!(output.contains("2562"));
     }
@@ -238,7 +236,7 @@ mod tests {
         let mut writer = std::io::Cursor::new(vec![]);
         Day::<101>::solve_file("in10.txt", &mut writer);
         let output_raw = writer.into_inner();
-        let output = std::str::from_utf8(&output_raw).unwrap();
+        let output = std::str::from_utf8(&output_raw).unwrap().trim();
         assert!(output.contains("14220"));
     }
 
@@ -247,7 +245,7 @@ mod tests {
         let mut writer = std::io::Cursor::new(vec![]);
         Day::<102>::solve_file("in10.txt", &mut writer);
         let output_raw = writer.into_inner();
-        let output = std::str::from_utf8(&output_raw).unwrap();
+        let output = std::str::from_utf8(&output_raw).unwrap().trim();
         assert!(output.contains(
             r#"####.###...##..###..#....####.####.#..#.
 ...#.#..#.#..#.#..#.#....#.......#.#..#.
@@ -263,7 +261,7 @@ mod tests {
         let mut writer = std::io::Cursor::new(vec![]);
         Day11::<3, 20>::solve_file("in11.txt", &mut writer);
         let output_raw = writer.into_inner();
-        let output = std::str::from_utf8(&output_raw).unwrap();
+        let output = std::str::from_utf8(&output_raw).unwrap().trim();
         assert!(output.contains("316888"));
     }
 
@@ -272,7 +270,7 @@ mod tests {
         let mut writer = std::io::Cursor::new(vec![]);
         Day11::<1, 10000>::solve_file("in11.txt", &mut writer);
         let output_raw = writer.into_inner();
-        let output = std::str::from_utf8(&output_raw).unwrap();
+        let output = std::str::from_utf8(&output_raw).unwrap().trim();
         assert!(output.contains("35270398814"));
     }
 
@@ -281,7 +279,7 @@ mod tests {
         let mut writer = std::io::Cursor::new(vec![]);
         Day::<12>::solve_file("in12.txt", &mut writer);
         let output_raw = writer.into_inner();
-        let output = std::str::from_utf8(&output_raw).unwrap();
+        let output = std::str::from_utf8(&output_raw).unwrap().trim();
         assert!(output.contains("412"));
         assert!(output.contains("402"));
     }
@@ -291,7 +289,7 @@ mod tests {
         let mut writer = std::io::Cursor::new(vec![]);
         Day::<1301>::solve_file("in13.txt", &mut writer);
         let output_raw = writer.into_inner();
-        let output = std::str::from_utf8(&output_raw).unwrap();
+        let output = std::str::from_utf8(&output_raw).unwrap().trim();
         assert!(output.contains("5623"));
     }
 
@@ -300,8 +298,26 @@ mod tests {
         let mut writer = std::io::Cursor::new(vec![]);
         Day::<1302>::solve_file("in13.txt", &mut writer);
         let output_raw = writer.into_inner();
-        let output = std::str::from_utf8(&output_raw).unwrap();
+        let output = std::str::from_utf8(&output_raw).unwrap().trim();
         assert!(output.contains("20570"));
+    }
+
+    #[test]
+    fn day14_abyss() {
+        let mut writer = std::io::Cursor::new(vec![]);
+        Day14::<false>::solve_file("in14.txt", &mut writer);
+        let output_raw = writer.into_inner();
+        let output = std::str::from_utf8(&output_raw).unwrap().trim();
+        assert_eq!(output, "768");
+    }
+
+    #[test]
+    fn day14_floor() {
+        let mut writer = std::io::Cursor::new(vec![]);
+        Day14::<true>::solve_file("in14.txt", &mut writer);
+        let output_raw = writer.into_inner();
+        let output = std::str::from_utf8(&output_raw).unwrap().trim();
+        assert_eq!(output, "26686");
     }
 
     #[test]
@@ -309,7 +325,7 @@ mod tests {
         let mut writer = std::io::Cursor::new(vec![]);
         Day15::<DefinitelyNoBeaconsAtLine<2000000>>::solve_file("in15.txt", &mut writer);
         let output_raw = writer.into_inner();
-        let output = std::str::from_utf8(&output_raw).unwrap();
+        let output = std::str::from_utf8(&output_raw).unwrap().trim();
         assert!(output.contains("5125700"));
     }
 
@@ -319,7 +335,7 @@ mod tests {
         let mut writer = std::io::Cursor::new(vec![]);
         Day15::<FindTheLoneOutOfRangeTile<4000000>>::solve_file("in15.txt", &mut writer);
         let output_raw = writer.into_inner();
-        let output = std::str::from_utf8(&output_raw).unwrap();
+        let output = std::str::from_utf8(&output_raw).unwrap().trim();
         assert!(output.contains("11379394658764"));
     }
 
@@ -328,7 +344,7 @@ mod tests {
         let mut writer = std::io::Cursor::new(vec![]);
         Day15::<DefinitelyNoBeaconsAtLine<10>>::solve_file("in15_small.txt", &mut writer);
         let output_raw = writer.into_inner();
-        let output = std::str::from_utf8(&output_raw).unwrap();
+        let output = std::str::from_utf8(&output_raw).unwrap().trim();
         assert!(output.contains("26"));
     }
 
@@ -337,7 +353,7 @@ mod tests {
         let mut writer = std::io::Cursor::new(vec![]);
         Day15::<FindTheLoneOutOfRangeTile<21>>::solve_file("in15_small.txt", &mut writer);
         let output_raw = writer.into_inner();
-        let output = std::str::from_utf8(&output_raw).unwrap();
+        let output = std::str::from_utf8(&output_raw).unwrap().trim();
         assert!(output.contains("56000011"));
     }
 
@@ -346,8 +362,8 @@ mod tests {
         let mut writer = std::io::Cursor::new(vec![]);
         Day::<1601>::solve_file("in16.txt", &mut writer);
         let output_raw = writer.into_inner();
-        let output = std::str::from_utf8(&output_raw).unwrap();
-        assert!(output.contains("2253"));
+        let output = std::str::from_utf8(&output_raw).unwrap().trim();
+        assert_eq!(output, "2253");
     }
 
     #[test]
@@ -355,7 +371,7 @@ mod tests {
         let mut writer = std::io::Cursor::new(vec![]);
         Day::<1602>::solve_file("in16.txt", &mut writer);
         let output_raw = writer.into_inner();
-        let output = std::str::from_utf8(&output_raw).unwrap();
-        assert!(output.contains("2838"));
+        let output = std::str::from_utf8(&output_raw).unwrap().trim();
+        assert_eq!(output, "2838");
     }
 }
