@@ -161,7 +161,8 @@ struct Point {
 struct Point2 {
     me_p: RoomId,
     elephant_p: RoomId,
-    time: i32,
+    me_finish_task_time: i32,
+    elephant_finish_task_time: i32,
     open_valves: u64,
     pressure_released: u64,
 }
@@ -173,6 +174,37 @@ impl Display for Point {
             "Open valves {:#064b}, Room {}, Time {}, Pressure released: {}",
             self.open_valves, self.room_id, self.time, self.pressure_released,
         )
+    }
+}
+
+trait PointKeyValue<T, U> {
+    fn get_key(&self) -> T;
+    fn get_value(&self) -> U;
+
+    fn compare_values(a: &U, b: &U) -> Option<std::cmp::Ordering>;
+}
+
+impl PointKeyValue<(u64, i32), (i32, u64)> for Point {
+    fn get_key(&self) -> (u64, i32) {
+        (self.open_valves, self.room_id)
+    }
+
+    fn get_value(&self) -> (i32, u64) {
+        (self.time, self.pressure_released)
+    }
+
+    fn compare_values(a: &(i32, u64), b: &(i32, u64)) -> Option<std::cmp::Ordering> {
+        let (a_time, a_pressure) = a;
+        let (b_time, b_pressure) = b;
+        if a_time >= b_time && a_pressure <= b_pressure {
+            return Some(std::cmp::Ordering::Less);
+        }
+
+        if a_time <= b_time && a_pressure >= b_pressure {
+            return Some(std::cmp::Ordering::Greater);
+        }
+
+        None
     }
 }
 
@@ -196,17 +228,48 @@ where
     fn get_valve_mask(room_id: RoomId) -> u64 {
         1u64 << room_id
     }
+
+    fn open_valve_value(room_id: RoomId, time_left: i32, rooms: &Rooms) -> u64 {
+        let room = rooms.collection.get(&room_id).unwrap();
+        let pressure: u64 = room.pressure.try_into().unwrap();
+        let time_left: u64 = time_left.try_into().unwrap();
+        pressure * time_left
+    }
+
+    fn get_open_valves(&self) -> u64;
+
+    fn state_potential_overestimate(&self, rooms: &Rooms) -> u64 {
+        let mut potential = 0u64;
+        let time_left = self.time_left();
+        if time_left > 0 {
+            for (k, v) in rooms.collection.iter() {
+                let mask = 1u64 << k;
+                if (self.get_open_valves() & mask) == 0 {
+                    potential += (v.pressure * time_left) as u64;
+                }
+            }
+        }
+        potential
+    }
 }
 
 impl PointTrait for Point {
     fn time_left(&self) -> i32 {
         30 - self.time
     }
+
+    fn get_open_valves(&self) -> u64 {
+        self.open_valves
+    }
 }
 
 impl PointTrait for Point2 {
     fn time_left(&self) -> i32 {
-        26 - self.time
+        26 - std::cmp::min(self.elephant_finish_task_time, self.me_finish_task_time)
+    }
+
+    fn get_open_valves(&self) -> u64 {
+        self.open_valves
     }
 }
 
@@ -228,58 +291,72 @@ impl Point {
             pressure_released,
         }
     }
+}
 
-    pub fn open_valve_value(room_id: RoomId, time_left: i32, rooms: &Rooms) -> u64 {
-        let room = rooms.collection.get(&room_id).unwrap();
-        let pressure: u64 = room.pressure.try_into().unwrap();
-        let time_left: u64 = time_left.try_into().unwrap();
-        pressure * time_left
-    }
-
-    pub fn state_potential_overestimate(&self, rooms: &Rooms) -> u64 {
-        let mut potential = 0u64;
-        let time_left = self.time_left();
-        for (k, v) in rooms.collection.iter() {
-            let mask = 1u64 << k;
-            if (self.open_valves & mask) == 0 {
-                potential += (v.pressure * time_left) as u64;
-            }
+impl Point2 {
+    pub fn initial(room_id: RoomId, rooms: &Rooms) -> Self {
+        Self {
+            open_valves: Self::initial_valve_state(rooms),
+            pressure_released: 0,
+            me_p: room_id,
+            elephant_p: room_id,
+            me_finish_task_time: 0,
+            elephant_finish_task_time: 0,
         }
-        potential
     }
 }
 
-// impl IterateNeighbours for Point {
-//     type Context = Exploration<Self, Rooms>;
-//
-//     fn neighbours(&self, context: &Self::Context) -> Vec<Self> {
-//         let mut options = vec![];
-//         let rooms = &context.structure;
-//
-//         if self.time_left() > 0 {
-//             rooms
-//                 .collection
-//                 .get(&self.room_id)
-//                 .unwrap()
-//                 .connections
-//                 .iter()
-//                 .for_each(|p| {
-//                     options.push(Self::new(
-//                         *p,
-//                         self.time + rooms.distances.get(&(self.room_id, *p)).unwrap(),
-//                         self.open_valves,
-//                         self.pressure_released,
-//                     ))
-//                 });
-//
-//             if let Some(open) = self.open_valve(rooms) {
-//                 options.push(open);
-//             }
-//         }
-//
-//         options
-//     }
-// }
+impl IterateNeighbours for Point2 {
+    type Context = Exploration<Self, Rooms>;
+
+    fn neighbours(&self, context: &Self::Context) -> Vec<Self> {
+        let mut options = vec![];
+        let rooms = &context.structure;
+
+        let (time, my_action_next, room_id) =
+            if self.me_finish_task_time < self.elephant_finish_task_time {
+                (self.me_finish_task_time, true, self.me_p)
+            } else {
+                (self.elephant_finish_task_time, false, self.elephant_p)
+            };
+
+        if self.time_left() > 0 {
+            rooms
+                .collection
+                .get(&room_id)
+                .unwrap()
+                .floyd_warshall_connections
+                .iter()
+                .for_each(|(p, distance)| {
+                    let valve_open_time = time + distance + 1;
+                    let valve_open_time_left = 26 - valve_open_time;
+                    if valve_open_time_left > 0 {
+                        let new_valve_state = self.open_valves | Self::get_valve_mask(*p);
+                        if new_valve_state != self.open_valves {
+                            let mut child = *self;
+
+                            child.open_valves = new_valve_state;
+                            child.pressure_released +=
+                                Self::open_valve_value(*p, valve_open_time_left, rooms);
+
+                            if my_action_next {
+                                child.me_p = *p;
+                                child.me_finish_task_time = valve_open_time;
+                            } else {
+                                child.elephant_p = *p;
+                                child.elephant_finish_task_time = valve_open_time;
+                            }
+
+                            options.push(child);
+                        }
+                    }
+                });
+        }
+
+        options
+    }
+}
+
 impl IterateNeighbours for Point {
     type Context = Exploration<Self, Rooms>;
 
@@ -302,12 +379,12 @@ impl IterateNeighbours for Point {
                             Self::open_valve_value(*p, valve_open_time_left, rooms);
                         let new_valve_state = self.open_valves | Self::get_valve_mask(*p);
                         if new_valve_state != self.open_valves && valve_open_time <= 30 {
-                            options.push(Self::new(
-                                *p,
-                                valve_open_time,
-                                new_valve_state,
-                                self.pressure_released + valve_open_value,
-                            ))
+                            options.push(Self {
+                                room_id: *p,
+                                time: valve_open_time,
+                                open_valves: new_valve_state,
+                                pressure_released: self.pressure_released + valve_open_value,
+                            })
                         }
                     }
                 });
@@ -390,6 +467,20 @@ where
     {
         self.explore_advanced(
             start,
+            (),
+            |p, _data| goal(p),
+            |p, _data| filter_neighbours(p),
+        )
+    }
+
+    // NOTE(lubo): Uses a hashset to avoid identical states
+    pub fn explore_avoid_identical<F, G>(&self, start: P, mut goal: G, mut filter_neighbours: F)
+    where
+        F: FnMut(&P) -> bool,
+        G: FnMut(&P) -> ExploreSignals,
+    {
+        self.explore_advanced(
+            start,
             HashSet::new(),
             |p, data| {
                 data.insert(*p);
@@ -429,7 +520,44 @@ where
     }
 }
 
-impl Problem for Day<16> {
+impl Problem for Day<1601001> {
+    fn solve_buffer<T, W>(reader: BufReader<T>, writer: &mut W)
+    where
+        T: std::io::Read,
+        W: std::io::Write,
+    {
+        let rooms = Rooms::from_buffer(reader);
+        let exp = Exploration::new(rooms);
+        let mut max_pressure_released = 0;
+
+        exp.explore(
+            Point::initial(0, &exp.structure),
+            |p| {
+                let state_potential = p.state_potential_overestimate(&exp.structure);
+
+                if state_potential == 0 {
+                    return ExploreSignals::Skip;
+                }
+                if p.pressure_released + state_potential <= max_pressure_released {
+                    return ExploreSignals::Skip;
+                }
+
+                if p.pressure_released > max_pressure_released {
+                    max_pressure_released = p.pressure_released;
+                }
+
+                ExploreSignals::Explore
+            },
+            |_p| true,
+        );
+
+        println!("MAX PRESSURE {}", max_pressure_released);
+
+        writeln!(writer, "Result: {}", max_pressure_released).unwrap();
+    }
+}
+
+impl Problem for Day<1601> {
     fn solve_buffer<T, W>(reader: BufReader<T>, writer: &mut W)
     where
         T: std::io::Read,
@@ -486,6 +614,44 @@ impl Problem for Day<16> {
         );
 
         println!("MAX PRESSURE {}", max_pressure_released);
+
+        writeln!(writer, "Result: {}", max_pressure_released).unwrap();
+    }
+}
+
+impl Problem for Day<1602> {
+    fn solve_buffer<T, W>(reader: BufReader<T>, writer: &mut W)
+    where
+        T: std::io::Read,
+        W: std::io::Write,
+    {
+        let rooms = Rooms::from_buffer(reader);
+        let exp = Exploration::new(rooms);
+        let mut max_pressure_released = 0;
+
+        exp.explore(
+            Point2::initial(0, &exp.structure),
+            |p| {
+                let state_potential = p.state_potential_overestimate(&exp.structure);
+
+                if state_potential == 0 {
+                    return ExploreSignals::Skip;
+                }
+                if p.pressure_released + state_potential <= max_pressure_released {
+                    return ExploreSignals::Skip;
+                }
+
+                if p.pressure_released > max_pressure_released {
+                    println!("New best PRESSURE {} @ {:?}", max_pressure_released, p);
+                    max_pressure_released = p.pressure_released;
+                }
+
+                ExploreSignals::Explore
+            },
+            |_p| true,
+        );
+
+        println!("MAX ELEPHANT PRESSURE {}", max_pressure_released);
 
         writeln!(writer, "Result: {}", max_pressure_released).unwrap();
     }

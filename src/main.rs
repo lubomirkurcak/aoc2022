@@ -23,7 +23,17 @@ fn main() {
     println!("Hey!");
     let mut writer = std::io::Cursor::new(vec![]);
     // Day::<14>::solve_file("in14.txt", &mut writer);
-    Day::<16>::solve_file("in16.txt", &mut writer);
+    // Day::<1601>::solve_file("in16.txt", &mut writer);
+    Day::<1601>::solve_file("in16.txt", &mut writer);
+    Day::<1601>::solve_file("in16.txt", &mut writer);
+    Day::<1601>::solve_file("in16.txt", &mut writer);
+    Day::<1601>::solve_file("in16.txt", &mut writer);
+    Day::<1601>::solve_file("in16.txt", &mut writer);
+    let t0 = std::time::Instant::now();
+    // Day::<1601001>::solve_file("in16.txt", &mut writer);
+    // Day::<1601001>::solve_file("in16.txt", &mut writer);
+    Day::<1602>::solve_file("in16.txt", &mut writer);
+    println!("Time: {:?}", t0.elapsed());
 }
 
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
