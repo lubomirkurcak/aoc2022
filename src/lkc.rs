@@ -6,3 +6,5 @@ pub mod math;
 pub mod transformations;
 pub mod v2;
 pub mod interval_set;
+pub mod explore;
+mod dumb;

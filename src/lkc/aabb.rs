@@ -25,6 +25,8 @@ where
     pub fn new(min: V2<T>, max: V2<T>) -> Self {
         Self { min, max }
     }
+
+    #[allow(dead_code)]
     pub fn covering(points: &[V2<T>]) -> Option<Self> {
         let mut iter = points.iter();
         if let Some(a) = iter.next() {

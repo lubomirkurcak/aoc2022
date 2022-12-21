@@ -8,6 +8,8 @@ mod day13;
 mod day14;
 mod day15;
 mod day16;
+mod day16_part1;
+mod day16_part2;
 mod day2;
 mod day3;
 mod day4;
@@ -21,18 +23,14 @@ mod lkc;
 
 fn main() {
     println!("Hey!");
+    let t0 = std::time::Instant::now();
     let mut writer = std::io::Cursor::new(vec![]);
+
     // Day::<14>::solve_file("in14.txt", &mut writer);
     // Day::<1601>::solve_file("in16.txt", &mut writer);
-    Day::<1601>::solve_file("in16.txt", &mut writer);
-    Day::<1601>::solve_file("in16.txt", &mut writer);
-    Day::<1601>::solve_file("in16.txt", &mut writer);
-    Day::<1601>::solve_file("in16.txt", &mut writer);
-    Day::<1601>::solve_file("in16.txt", &mut writer);
-    let t0 = std::time::Instant::now();
-    // Day::<1601001>::solve_file("in16.txt", &mut writer);
     // Day::<1601001>::solve_file("in16.txt", &mut writer);
     Day::<1602>::solve_file("in16.txt", &mut writer);
+
     println!("Time: {:?}", t0.elapsed());
 }
 
@@ -343,5 +341,23 @@ mod tests {
         let output_raw = writer.into_inner();
         let output = std::str::from_utf8(&output_raw).unwrap();
         assert!(output.contains("56000011"));
+    }
+
+    #[test]
+    fn day16_alone() {
+        let mut writer = std::io::Cursor::new(vec![]);
+        Day::<1601>::solve_file("in16.txt", &mut writer);
+        let output_raw = writer.into_inner();
+        let output = std::str::from_utf8(&output_raw).unwrap();
+        assert!(output.contains("2253"));
+    }
+
+    #[test]
+    fn day16_with_elephant() {
+        let mut writer = std::io::Cursor::new(vec![]);
+        Day::<1602>::solve_file("in16.txt", &mut writer);
+        let output_raw = writer.into_inner();
+        let output = std::str::from_utf8(&output_raw).unwrap();
+        assert!(output.contains("2838"));
     }
 }
