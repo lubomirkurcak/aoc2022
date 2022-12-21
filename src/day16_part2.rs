@@ -1,9 +1,9 @@
-use std::{hash::Hash, io::BufReader, vec};
+use std::{cmp::Ordering, hash::Hash, io::BufReader, vec};
 
 use crate::{
     day16::{PointTrait, Rooms},
     lkc::{
-        explore::{Exploration, ExploreSignals},
+        explore::{Exploration, ExploreSignals, PointKeyValue},
         geometric_traits::IterateNeighbours,
     },
     Day, Problem,
@@ -41,6 +41,34 @@ impl Point2 {
             me_finish_task_time: 0,
             elephant_finish_task_time: 0,
         }
+    }
+}
+
+impl PointKeyValue for Point2 {
+    type K = (u64, i32, i32);
+    type V = (u64, i32, i32);
+
+    fn get_key(&self) -> Self::K {
+        (self.open_valves, self.me_p, self.elephant_p)
+    }
+
+    fn get_value(&self) -> Self::V {
+        (
+            self.pressure_released,
+            self.me_finish_task_time,
+            self.elephant_finish_task_time,
+        )
+    }
+
+    fn compare_values(a: &Self::V, b: &Self::V) -> Option<Ordering> {
+        if a.0 <= b.0 && a.1 >= b.1 && a.2 >= b.2 {
+            return Some(Ordering::Less);
+        }
+        if a.0 >= b.0 && a.1 <= b.1 && a.2 <= b.2 {
+            return Some(Ordering::Greater);
+        }
+
+        None
     }
 }
 
@@ -105,7 +133,7 @@ impl Problem for Day<1602> {
         let exp = Exploration::new(rooms);
         let mut max_pressure_released = 0;
 
-        exp.explore(
+        exp.explore_avoid_worse(
             Point2::initial(0, &exp.structure),
             |p| {
                 let state_potential = p.state_potential_overestimate(&exp.structure);

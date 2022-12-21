@@ -18,6 +18,6 @@ impl Problem for Day<0> {
             result = max(result, line.len());
         }
 
-        writeln!(writer, "Result: {}", result).unwrap();
+        writeln!(writer, "{}", result).unwrap();
     }
 }
