@@ -10,15 +10,15 @@ use super::{
 };
 
 #[derive(Clone)]
-pub struct Array2D<T> {
+pub struct Array2d<T> {
     pub data: Vec<T>,
     pub width: usize,
     pub height: usize,
 }
 
-impl<T: Display> Display for Array2D<T> {
+impl<T: Display> Display for Array2d<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for y in 0..self.height {
+        for y in (0..self.height).rev() {
             for x in 0..self.width {
                 write!(f, "{}", self.get(V2::new(x, y)).unwrap())?;
             }
@@ -29,7 +29,7 @@ impl<T: Display> Display for Array2D<T> {
     }
 }
 
-impl Array2D<char> {
+impl Array2d<char> {
     pub fn from_buffer<R: std::io::Read>(reader: BufReader<R>) -> Self {
         let lines: Vec<_> = reader.lines().map(|x| x.unwrap()).collect();
         let height = lines.len();
@@ -45,7 +45,7 @@ impl Array2D<char> {
     }
 }
 
-impl<T> LinearIndex<V2usize> for Array2D<T> {
+impl<T> LinearIndex<V2usize> for Array2d<T> {
     fn index(&self, i: V2usize) -> Option<usize> {
         if i.x < self.width && i.y < self.height {
             Some(i.y * self.width + i.x)
@@ -65,7 +65,7 @@ impl<T> LinearIndex<V2usize> for Array2D<T> {
     }
 }
 
-impl<T> LinearIndex<V2i32> for Array2D<T> {
+impl<T> LinearIndex<V2i32> for Array2d<T> {
     fn index(&self, i: V2i32) -> Option<usize> {
         if i.x >= 0 && i.y >= 0 && (i.x as usize) < self.width && (i.y as usize) < self.height {
             Some((i.y as usize) * self.width + (i.x as usize))
@@ -85,7 +85,7 @@ impl<T> LinearIndex<V2i32> for Array2D<T> {
     }
 }
 
-impl<T: Copy> Array2D<T> {
+impl<T: Copy> Array2d<T> {
     pub fn new(width: usize, height: usize, default: T) -> Self {
         Self {
             data: iter::repeat(default).take(width * height).collect(),
@@ -95,7 +95,7 @@ impl<T: Copy> Array2D<T> {
     }
 }
 
-impl<T> Array2D<T> {
+impl<T> Array2d<T> {
     pub fn set<I>(&mut self, p: I, v: T) -> bool
     where
         Self: LinearIndex<I>,
@@ -139,13 +139,13 @@ impl<T> Array2D<T> {
         }
     }
 
-    pub fn map<F, U>(&self, f: F) -> Array2D<U>
+    pub fn map<F, U>(&self, f: F) -> Array2d<U>
     where
         F: Fn(&T) -> U,
     {
         let data = self.data.iter().map(f).collect();
 
-        Array2D::<U> {
+        Array2d::<U> {
             data,
             width: self.width,
             height: self.height,
@@ -153,59 +153,94 @@ impl<T> Array2D<T> {
     }
 }
 
-impl<T: Copy> Array2D<T> {
-    pub fn draw_line(&mut self, p0: V2i32, p1: V2i32, v: T) {
-        let dir = p1 - p0;
+pub struct Array2dLineIterator {
+    step_options: Vec<V2i32>,
+    at: V2i32,
+    end: V2i32,
+}
 
-        let mut step_options = vec![];
-        match dir.x.cmp(&0) {
-            std::cmp::Ordering::Less => {
-                step_options.push(V2::new(-1, 0));
-                match dir.y.cmp(&0) {
-                    std::cmp::Ordering::Less => {
-                        step_options.push(V2::new(0, -1));
-                        step_options.push(V2::new(-1, -1));
-                    }
-                    std::cmp::Ordering::Equal => (),
-                    std::cmp::Ordering::Greater => {
-                        step_options.push(V2::new(0, 1));
-                        step_options.push(V2::new(-1, 1));
-                    }
-                };
-            }
-            std::cmp::Ordering::Equal => {
-                match dir.y.cmp(&0) {
-                    std::cmp::Ordering::Less => step_options.push(V2::new(0, -1)),
-                    std::cmp::Ordering::Equal => (),
-                    std::cmp::Ordering::Greater => step_options.push(V2::new(0, 1)),
-                };
-            }
-            std::cmp::Ordering::Greater => {
-                step_options.push(V2::new(1, 0));
-                match dir.y.cmp(&0) {
-                    std::cmp::Ordering::Less => {
-                        step_options.push(V2::new(0, -1));
-                        step_options.push(V2::new(1, -1));
-                    }
-                    std::cmp::Ordering::Equal => (),
-                    std::cmp::Ordering::Greater => {
-                        step_options.push(V2::new(0, 1));
-                        step_options.push(V2::new(1, 1));
-                    }
-                };
-            }
-        };
+impl Iterator for Array2dLineIterator {
+    type Item = V2i32;
 
-        let mut at = p0;
-        self.set(at, v);
-        while at != p1 {
-            let delta = p1 - at;
-            let best_step = *step_options
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.step_options.is_empty() {
+            let dir = self.end - self.at;
+            match dir.x.cmp(&0) {
+                std::cmp::Ordering::Less => {
+                    self.step_options.push(V2::new(-1, 0));
+                    match dir.y.cmp(&0) {
+                        std::cmp::Ordering::Less => {
+                            self.step_options.push(V2::new(0, -1));
+                            self.step_options.push(V2::new(-1, -1));
+                        }
+                        std::cmp::Ordering::Equal => (),
+                        std::cmp::Ordering::Greater => {
+                            self.step_options.push(V2::new(0, 1));
+                            self.step_options.push(V2::new(-1, 1));
+                        }
+                    };
+                }
+                std::cmp::Ordering::Equal => {
+                    match dir.y.cmp(&0) {
+                        std::cmp::Ordering::Less => self.step_options.push(V2::new(0, -1)),
+                        std::cmp::Ordering::Equal => (),
+                        std::cmp::Ordering::Greater => self.step_options.push(V2::new(0, 1)),
+                    };
+                }
+                std::cmp::Ordering::Greater => {
+                    self.step_options.push(V2::new(1, 0));
+                    match dir.y.cmp(&0) {
+                        std::cmp::Ordering::Less => {
+                            self.step_options.push(V2::new(0, -1));
+                            self.step_options.push(V2::new(1, -1));
+                        }
+                        std::cmp::Ordering::Equal => (),
+                        std::cmp::Ordering::Greater => {
+                            self.step_options.push(V2::new(0, 1));
+                            self.step_options.push(V2::new(1, 1));
+                        }
+                    };
+                }
+            }
+
+            Some(self.at)
+        } else if self.at != self.end {
+            let delta = self.end - self.at;
+            let best_step = *self
+                .step_options
                 .iter()
                 .max_by_key(|step| delta.inner(**step))
                 .unwrap();
-            at += best_step;
-            self.set(at, v);
+            self.at += best_step;
+
+            Some(self.at)
+        } else {
+            None
+        }
+    }
+}
+
+impl<T> Array2d<T> {
+    pub fn line_iter(&self, p0: V2i32, p1: V2i32) -> Array2dLineIterator {
+        Array2dLineIterator {
+            at: p0,
+            end: p1,
+            step_options: vec![],
+        }
+    }
+}
+
+impl<T> Array2d<T> {
+    pub fn iter_values_in_line(&'_ self, p0: V2i32, p1: V2i32) -> impl Iterator<Item = &'_ T> {
+        // self.line_iter(p0, p1).filter_map(|p| self.get(p))
+        self.line_iter(p0, p1).map(|p| self.get(p).unwrap())
+    }
+}
+
+impl<T: Copy> Array2d<T> {
+    pub fn draw_line(&mut self, p0: V2i32, p1: V2i32, v: T) {
+        for p in self.line_iter(p0, p1) {
+            self.set(p, v);
         }
     }
 }

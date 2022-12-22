@@ -1,7 +1,7 @@
 use std::{collections::HashSet, io::BufReader};
 
 use crate::{
-    lkc::{array2d::Array2D, geometric_traits::IterateNeighbours, v2::V2usize},
+    lkc::{array2d::Array2d, geometric_traits::IterateNeighbours, v2::V2usize},
     Day, Problem,
 };
 
@@ -11,8 +11,8 @@ enum ExplorationLocation {
 }
 
 struct Exploration {
-    map: Array2D<char>,
-    distance: Array2D<Option<i32>>,
+    map: Array2d<char>,
+    distance: Array2d<Option<i32>>,
     open: Vec<V2usize>,
     closed: HashSet<V2usize>,
     goal: ExplorationLocation,
@@ -21,7 +21,7 @@ struct Exploration {
 
 impl Exploration {
     fn from(
-        map: &Array2D<char>,
+        map: &Array2d<char>,
         start: V2usize,
         goal: ExplorationLocation,
         traversable: fn(char, char) -> bool,
@@ -94,7 +94,7 @@ impl Problem for Day<12> {
         T: std::io::Read,
         W: std::io::Write,
     {
-        let mut map = Array2D::from_buffer(reader);
+        let mut map = Array2d::from_buffer(reader);
         let start = map.find(&'S').unwrap();
         let end = map.find(&'E').unwrap();
         map.set(start, 'a');
