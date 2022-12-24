@@ -8,3 +8,6 @@ pub mod linear_index;
 pub mod math;
 pub mod transformations;
 pub mod v2;
+pub mod line_iterator;
+pub mod line;
+pub mod cli;

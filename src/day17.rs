@@ -1,16 +1,8 @@
-use std::{io::prelude::*, io::BufReader};
+use crate::lkc::{line::LineV2i32, v2::V2};
 
-use crate::{
-    lkc::{
-        array2d::Array2d,
-        v2::{V2i32, V2},
-    },
-    Problem,
-};
-
-struct Rock;
+pub struct Rock;
 impl Rock {
-    fn width(t: usize) -> i32 {
+    pub fn width(t: usize) -> i32 {
         match t {
             0 => 4,
             1 => 3,
@@ -20,7 +12,7 @@ impl Rock {
             _ => panic!(),
         }
     }
-    fn height(t: usize) -> i32 {
+    pub fn height(t: usize) -> i32 {
         match t {
             0 => 1,
             1 => 3,
@@ -30,93 +22,57 @@ impl Rock {
             _ => panic!(),
         }
     }
-    fn construct(t: usize) -> Vec<(V2i32, V2i32)> {
+    pub fn construct(t: usize) -> Vec<LineV2i32> {
         match t {
-            0 => vec![(V2::new(0, 0), V2::new(3, 0))],
+            0 => vec![LineV2i32::new(V2::new(0, 0), V2::new(3, 0))],
             1 => vec![
-                (V2::new(0, 1), V2::new(2, 1)),
-                (V2::new(1, 0), V2::new(1, 2)),
+                LineV2i32::new(V2::new(0, 1), V2::new(2, 1)),
+                LineV2i32::new(V2::new(1, 0), V2::new(1, 2)),
             ],
             2 => vec![
-                (V2::new(0, 0), V2::new(2, 0)),
-                (V2::new(2, 0), V2::new(2, 2)),
+                LineV2i32::new(V2::new(0, 0), V2::new(2, 0)),
+                LineV2i32::new(V2::new(2, 0), V2::new(2, 2)),
             ],
-            3 => vec![(V2::new(0, 0), V2::new(0, 3))],
+            3 => vec![LineV2i32::new(V2::new(0, 0), V2::new(0, 3))],
             4 => vec![
-                (V2::new(0, 0), V2::new(1, 0)),
-                (V2::new(0, 1), V2::new(1, 1)),
+                LineV2i32::new(V2::new(0, 0), V2::new(1, 0)),
+                LineV2i32::new(V2::new(0, 1), V2::new(1, 1)),
             ],
             _ => panic!(),
         }
     }
-}
-
-pub struct Day17<const C: usize>;
-
-impl<const C: usize> Problem for Day17<C> {
-    fn solve_buffer<T, W>(reader: BufReader<T>, writer: &mut W)
-    where
-        T: std::io::Read,
-        W: std::io::Write,
-    {
-        let check = |map: &Array2d<char>, blueprint: &Vec<_>, p| {
-            blueprint
-                .iter()
-                .map(|line: &(V2i32, V2i32)| {
-                    map.iter_values_in_line(line.0 + p, line.1 + p)
-                        .all(|c| c == &'.')
-                })
-                .all(|x| x)
-        };
-
-        let draw = |map: &mut Array2d<char>, blueprint: &Vec<(V2i32, V2i32)>, p| {
-            blueprint.iter().for_each(|line| {
-                map.draw_line(line.0 + p, line.1 + p, '#');
-            })
-        };
-
-        let wind = reader
-            .lines()
-            .map(|x| x.unwrap())
-            .flat_map(|x| x.chars().collect::<Vec<_>>())
-            .map(|x| match x {
-                '>' => 1,
-                '<' => -1,
-                _ => panic!(),
-            })
-            .collect::<Vec<_>>();
-        let mut wind = wind.iter().cycle();
-
-        let mut map = Array2d::new(7, 100, '.');
-
-        let mut first_free_row = 0;
-        for rock_type in (0..5).cycle().take(C) {
-            let mut p = V2::new(2, first_free_row + 3);
-            let blueprint = Rock::construct(rock_type);
-            let width = Rock::width(rock_type);
-            let height = Rock::height(rock_type);
-
-            assert!(check(&map, &blueprint, p));
-
-            loop {
-                let x = (p.x + *wind.next().unwrap()).clamp(0, 7 - width);
-                if p.x != x && check(&map, &blueprint, V2::new(x, p.y)) {
-                    p.x = x;
-                }
-
-                if p.y > 0 && check(&map, &blueprint, V2::new(p.x, p.y - 1)) {
-                    p.y -= 1;
-                } else {
-                    draw(&mut map, &blueprint, p);
-                    first_free_row = std::cmp::max(first_free_row, p.y + height);
-                    break;
-                }
+    pub fn left_side() -> Vec<LineV2i32> {
+        vec![LineV2i32::new(V2::new(0, 0), V2::new(0, 3))]
+    }
+    pub fn right_side() -> Vec<LineV2i32> {
+        vec![LineV2i32::new(V2::new(6, 0), V2::new(6, 3))]
+    }
+    fn get_bit_value(x: i32, y: i32) -> u32 {
+        assert!(x >= 0);
+        assert!(y >= 0);
+        assert!(x <= 7);
+        assert!(y <= 3);
+        assert_ne!(1 << (y * 8 + x), 0);
+        1 << (y * 8 + x)
+    }
+    pub fn construct_blueprint_mask(blueprint: Vec<LineV2i32>) -> u32 {
+        let mut bit_rep = 0;
+        for line in blueprint {
+            for p in line.iter() {
+                bit_rep |= Self::get_bit_value(p.x, p.y);
             }
-
-            println!("{}", map);
         }
-        println!("{}", first_free_row);
+        println!("{:#032b}", bit_rep);
 
-        writeln!(writer, "{}", 0).unwrap();
+        bit_rep
+    }
+    pub fn construct_mask(t: usize) -> u32 {
+        Self::construct_blueprint_mask(Self::construct(t))
+    }
+    pub fn left_side_mask() -> u32 {
+        Self::construct_blueprint_mask(Self::left_side())
+    }
+    pub fn right_side_mask() -> u32 {
+        Self::construct_blueprint_mask(Self::right_side())
     }
 }

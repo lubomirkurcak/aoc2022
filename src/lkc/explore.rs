@@ -1,4 +1,4 @@
-use super::geometric_traits::IterateNeighbours;
+use super::geometric_traits::{IterateNeighbours, IterateNeighboursContext};
 use std::{
     cmp::Ordering,
     collections::{HashMap, HashSet},
@@ -24,61 +24,61 @@ pub trait PointKeyValue {
 }
 
 #[derive(Debug)]
-pub struct Exploration<P: IterateNeighbours, S> {
-    pub structure: S,
+pub struct Exploration<P: IterateNeighbours<S>, S: IterateNeighboursContext> {
+    pub context: S,
     phantom: std::marker::PhantomData<P>,
 }
 
-impl<P: Clone + Copy, S> Exploration<P, S>
+impl<P: Clone + Copy, S: IterateNeighboursContext> Exploration<P, S>
 where
-    P: IterateNeighbours<Context = Self> + Hash + Eq,
+    P: IterateNeighbours<S> + Hash + Eq,
 {
-    pub fn new(structure: S) -> Self {
+    pub fn new(context: S) -> Self {
         Self {
-            structure,
+            context,
             phantom: std::marker::PhantomData,
         }
     }
 
-    pub fn explore<F, G>(&self, start: P, mut goal: G, mut filter_neighbours: F)
+    pub fn explore<F, G>(&mut self, start: P, mut goal: G, mut filter_neighbours: F)
     where
-        F: FnMut(&P) -> bool,
-        G: FnMut(&P) -> ExploreSignals,
+        F: FnMut(&P, &mut S) -> bool,
+        G: FnMut(&P, &mut S) -> ExploreSignals,
     {
         self.explore_advanced(
             start,
             (),
-            |p, _data| goal(p),
-            |p, _data| filter_neighbours(p),
+            |p, _data, context| goal(p, context),
+            |p, _data, context| filter_neighbours(p, context),
         )
     }
 
     // NOTE(lubo): Uses a hashset to avoid identical states
-    pub fn explore_avoid_identical<F, G>(&self, start: P, mut goal: G, mut filter_neighbours: F)
+    pub fn explore_avoid_identical<F, G>(&mut self, start: P, mut goal: G, mut filter_neighbours: F)
     where
-        F: FnMut(&P) -> bool,
-        G: FnMut(&P) -> ExploreSignals,
+        F: FnMut(&P, &mut S) -> bool,
+        G: FnMut(&P, &mut S) -> ExploreSignals,
     {
         self.explore_advanced(
             start,
             HashSet::new(),
-            |p, data| {
+            |p, data, context| {
                 data.insert(*p);
-                goal(p)
+                goal(p, context)
             },
-            |p, data| !data.contains(p) && filter_neighbours(p),
+            |p, data, context| !data.contains(p) && filter_neighbours(p, context),
         )
     }
 
     pub fn explore_advanced<T, F, G>(
-        &self,
+        &mut self,
         start: P,
         mut data: T,
         mut goal: G,
         mut filter_neighbours: F,
     ) where
-        F: FnMut(&P, &mut T) -> bool,
-        G: FnMut(&P, &mut T) -> ExploreSignals,
+        F: FnMut(&P, &mut T, &mut S) -> bool,
+        G: FnMut(&P, &mut T, &mut S) -> ExploreSignals,
     {
         // let mut open = StackBag::new();
         // open.put(start);
@@ -88,14 +88,14 @@ where
         while !open.is_empty() {
             let p = open.pop().unwrap();
 
-            match goal(&p, &mut data) {
+            match goal(&p, &mut data, &mut self.context) {
                 ExploreSignals::ReachedGoal => break,
                 ExploreSignals::Explore => (),
                 ExploreSignals::Skip => continue,
             }
 
-            for neighbour in p.neighbours(self) {
-                if filter_neighbours(&neighbour, &mut data) {
+            for neighbour in p.neighbours(&self.context) {
+                if filter_neighbours(&neighbour, &mut data, &mut self.context) {
                     // open.put(neighbour);
                     open.push(neighbour);
                 }
@@ -104,9 +104,11 @@ where
     }
 }
 
-impl<P: Clone + Copy, S> Exploration<P, S>
+impl<P, S> Exploration<P, S>
 where
-    P: IterateNeighbours<Context = Self> + Hash + Eq + PointKeyValue,
+    P: IterateNeighbours<S> + PointKeyValue,
+    P: Clone + Copy + Hash + Eq,
+    S: IterateNeighboursContext,
 {
     // NOTE(lubo): Uses a hashmap that tracks the best 'value: V' for reach explored 'key: K'
     // 'V', 'K' and 'P::compare_values(a: &V, b &V)' need to be defined by user.
@@ -124,15 +126,15 @@ where
     //   get_key() => self.position
     //   get_value() => self.health
     //   Point::compare_values(a: &V, b &V) => Some(a < b)
-    pub fn explore_avoid_worse<F, G>(&self, start: P, mut goal: G, mut filter_neighbours: F)
+    pub fn explore_avoid_worse<F, G>(&mut self, start: P, mut goal: G, mut filter_neighbours: F)
     where
-        F: FnMut(&P) -> bool,
-        G: FnMut(&P) -> ExploreSignals,
+        F: FnMut(&P, &mut S) -> bool,
+        G: FnMut(&P, &mut S) -> ExploreSignals,
     {
         self.explore_advanced(
             start,
             HashMap::<<P as PointKeyValue>::K, <P as PointKeyValue>::V>::new(),
-            |p, data| {
+            |p, data, context| {
                 let k = p.get_key();
                 let v = p.get_value();
 
@@ -150,9 +152,9 @@ where
                     data.insert(k, v);
                 }
 
-                goal(p)
+                goal(p, context)
             },
-            |p, data| {
+            |p, data, context| {
                 let k = p.get_key();
                 let v = p.get_value();
 
@@ -162,7 +164,7 @@ where
                     }
                 }
 
-                filter_neighbours(p)
+                filter_neighbours(p, context)
             },
         )
     }

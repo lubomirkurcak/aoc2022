@@ -5,6 +5,8 @@ use std::{
 };
 
 use super::{
+    geometric_traits::{IterateNeighbours, IterateNeighboursContext, Movement4Directions},
+    line_iterator::LineIterator,
     linear_index::LinearIndex,
     v2::{V2i32, V2usize, V2},
 };
@@ -63,6 +65,10 @@ impl<T> LinearIndex<V2usize> for Array2d<T> {
             None
         }
     }
+
+    fn is_in_bounds(&self, i: V2usize) -> bool {
+        i.x < self.width && i.y < self.height
+    }
 }
 
 impl<T> LinearIndex<V2i32> for Array2d<T> {
@@ -83,6 +89,13 @@ impl<T> LinearIndex<V2i32> for Array2d<T> {
             None
         }
     }
+
+    fn is_in_bounds(&self, i: V2i32) -> bool {
+        i.x >= 0
+            && i.y >= 0
+            && i.x < self.width.try_into().unwrap()
+            && i.y < self.height.try_into().unwrap()
+    }
 }
 
 impl<T: Copy> Array2d<T> {
@@ -92,6 +105,25 @@ impl<T: Copy> Array2d<T> {
             width,
             height,
         }
+    }
+
+    pub fn shift_n_rows_down(&mut self, n: usize, default: T) {
+        self.data.drain(..self.width * n);
+        self.data.extend(
+            iter::repeat(default)
+                .take(self.width * n)
+                .collect::<Vec<T>>(),
+        );
+    }
+}
+
+impl<T: Copy + PartialEq> Array2d<T> {
+    pub fn replace_all(&mut self, from: &T, to: &T) {
+        self.data.iter_mut().for_each(|x| {
+            if x == from {
+                *x = *to;
+            }
+        })
     }
 }
 
@@ -153,80 +185,9 @@ impl<T> Array2d<T> {
     }
 }
 
-pub struct Array2dLineIterator {
-    step_options: Vec<V2i32>,
-    at: V2i32,
-    end: V2i32,
-}
-
-impl Iterator for Array2dLineIterator {
-    type Item = V2i32;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.step_options.is_empty() {
-            let dir = self.end - self.at;
-            match dir.x.cmp(&0) {
-                std::cmp::Ordering::Less => {
-                    self.step_options.push(V2::new(-1, 0));
-                    match dir.y.cmp(&0) {
-                        std::cmp::Ordering::Less => {
-                            self.step_options.push(V2::new(0, -1));
-                            self.step_options.push(V2::new(-1, -1));
-                        }
-                        std::cmp::Ordering::Equal => (),
-                        std::cmp::Ordering::Greater => {
-                            self.step_options.push(V2::new(0, 1));
-                            self.step_options.push(V2::new(-1, 1));
-                        }
-                    };
-                }
-                std::cmp::Ordering::Equal => {
-                    match dir.y.cmp(&0) {
-                        std::cmp::Ordering::Less => self.step_options.push(V2::new(0, -1)),
-                        std::cmp::Ordering::Equal => (),
-                        std::cmp::Ordering::Greater => self.step_options.push(V2::new(0, 1)),
-                    };
-                }
-                std::cmp::Ordering::Greater => {
-                    self.step_options.push(V2::new(1, 0));
-                    match dir.y.cmp(&0) {
-                        std::cmp::Ordering::Less => {
-                            self.step_options.push(V2::new(0, -1));
-                            self.step_options.push(V2::new(1, -1));
-                        }
-                        std::cmp::Ordering::Equal => (),
-                        std::cmp::Ordering::Greater => {
-                            self.step_options.push(V2::new(0, 1));
-                            self.step_options.push(V2::new(1, 1));
-                        }
-                    };
-                }
-            }
-
-            Some(self.at)
-        } else if self.at != self.end {
-            let delta = self.end - self.at;
-            let best_step = *self
-                .step_options
-                .iter()
-                .max_by_key(|step| delta.inner(**step))
-                .unwrap();
-            self.at += best_step;
-
-            Some(self.at)
-        } else {
-            None
-        }
-    }
-}
-
 impl<T> Array2d<T> {
-    pub fn line_iter(&self, p0: V2i32, p1: V2i32) -> Array2dLineIterator {
-        Array2dLineIterator {
-            at: p0,
-            end: p1,
-            step_options: vec![],
-        }
+    pub fn line_iter(&self, p0: V2i32, p1: V2i32) -> LineIterator {
+        LineIterator::new(p0, p1)
     }
 }
 
@@ -242,5 +203,37 @@ impl<T: Copy> Array2d<T> {
         for p in self.line_iter(p0, p1) {
             self.set(p, v);
         }
+    }
+}
+
+impl<T> IterateNeighboursContext for Array2d<T> {}
+
+impl<T: Movement4Directions + Copy, U> IterateNeighbours<Array2d<U>> for T
+where
+    Array2d<U>: LinearIndex<T>,
+{
+    fn neighbours(&self, _context: &Array2d<U>) -> Vec<Self> {
+        let mut results = vec![];
+        if let Some(a) = self.step_right() {
+            if _context.is_in_bounds(a) {
+                results.push(a);
+            }
+        }
+        if let Some(a) = self.step_up() {
+            if _context.is_in_bounds(a) {
+                results.push(a);
+            }
+        }
+        if let Some(a) = self.step_left() {
+            if _context.is_in_bounds(a) {
+                results.push(a);
+            }
+        }
+        if let Some(a) = self.step_down() {
+            if _context.is_in_bounds(a) {
+                results.push(a);
+            }
+        }
+        results
     }
 }

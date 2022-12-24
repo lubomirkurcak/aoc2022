@@ -103,12 +103,9 @@ impl PointKeyValue for Point2 {
     }
 }
 
-impl IterateNeighbours for Point2 {
-    type Context = Exploration<Self, Rooms>;
-
-    fn neighbours(&self, context: &Self::Context) -> Vec<Self> {
+impl IterateNeighbours<Rooms> for Point2 {
+    fn neighbours(&self, context: &Rooms) -> Vec<Self> {
         let mut options = vec![];
-        let rooms = &context.structure;
 
         let (time, my_action_next, room_id) =
             if self.me_finish_task_time < self.elephant_finish_task_time {
@@ -118,7 +115,7 @@ impl IterateNeighbours for Point2 {
             };
 
         if self.time_left() > 0 {
-            rooms
+            context
                 .collection
                 .get(&room_id)
                 .unwrap()
@@ -134,7 +131,7 @@ impl IterateNeighbours for Point2 {
 
                             child.open_valves = new_valve_state;
                             child.pressure_released +=
-                                Self::open_valve_value(*p, valve_open_time_left, rooms);
+                                Self::open_valve_value(*p, valve_open_time_left, context);
 
                             if my_action_next {
                                 child.me_p = *p;
@@ -161,13 +158,13 @@ impl Problem for Day<1602> {
         W: std::io::Write,
     {
         let rooms = Rooms::from_buffer(reader);
-        let exp = Exploration::new(rooms);
+        let mut exp = Exploration::new(rooms);
         let mut max_pressure_released = 0;
 
         exp.explore_avoid_worse(
-            Point2::initial(0, &exp.structure),
-            |p| {
-                let state_potential = p.state_potential_overestimate(&exp.structure);
+            Point2::initial(0, &exp.context),
+            |p, rooms| {
+                let state_potential = p.state_potential_overestimate(rooms);
 
                 if state_potential == 0 {
                     return ExploreSignals::Skip;
@@ -183,7 +180,7 @@ impl Problem for Day<1602> {
 
                 ExploreSignals::Explore
             },
-            |_p| true,
+            |_p, _rooms| true,
         );
 
         writeln!(writer, "{}", max_pressure_released).unwrap();

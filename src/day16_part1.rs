@@ -96,15 +96,12 @@ impl Point {
     }
 }
 
-impl IterateNeighbours for Point {
-    type Context = Exploration<Self, Rooms>;
-
-    fn neighbours(&self, context: &Self::Context) -> Vec<Self> {
+impl IterateNeighbours<Rooms> for Point {
+    fn neighbours(&self, context: &Rooms) -> Vec<Self> {
         let mut options = vec![];
-        let rooms = &context.structure;
 
         if self.time_left() > 0 {
-            rooms
+            context
                 .collection
                 .get(&self.room_id)
                 .unwrap()
@@ -115,7 +112,7 @@ impl IterateNeighbours for Point {
                     let valve_open_time_left = Self::get_total_time() - valve_open_time;
                     if valve_open_time_left > 0 {
                         let valve_open_value =
-                            Self::open_valve_value(*p, valve_open_time_left, rooms);
+                            Self::open_valve_value(*p, valve_open_time_left, context);
                         let new_valve_state = self.open_valves | Self::get_valve_mask(*p);
                         if new_valve_state != self.open_valves {
                             options.push(Self {
@@ -140,13 +137,13 @@ impl Problem for Day<1601> {
         W: std::io::Write,
     {
         let rooms = Rooms::from_buffer(reader);
-        let exp = Exploration::new(rooms);
+        let mut exp = Exploration::new(rooms);
         let mut max_pressure_released = 0;
 
         exp.explore_avoid_worse(
-            Point::initial(0, &exp.structure),
-            |p| {
-                let state_potential = p.state_potential_overestimate(&exp.structure);
+            Point::initial(0, &exp.context),
+            |p, rooms| {
+                let state_potential = p.state_potential_overestimate(rooms);
 
                 if state_potential == 0 {
                     return ExploreSignals::Skip;
@@ -161,7 +158,7 @@ impl Problem for Day<1601> {
 
                 ExploreSignals::Explore
             },
-            |_p| true,
+            |_p, _rooms| true,
         );
 
         writeln!(writer, "{}", max_pressure_released).unwrap();

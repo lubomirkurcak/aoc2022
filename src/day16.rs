@@ -1,5 +1,7 @@
 use std::{collections::HashMap, io::prelude::*, io::BufReader, vec};
 
+use crate::lkc::geometric_traits::IterateNeighboursContext;
+
 pub type RoomId = i32;
 
 #[derive(Debug)]
@@ -10,6 +12,8 @@ pub struct Rooms {
     pub distances: HashMap<(RoomId, RoomId), i32>,
     pub interesting_rooms: Vec<RoomId>,
 }
+
+impl IterateNeighboursContext for Rooms {}
 
 impl Rooms {
     // let dist be a |V| × |V| array of minimum distances initialized to ∞ (infinity)

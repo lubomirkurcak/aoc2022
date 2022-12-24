@@ -11,13 +11,14 @@ pub trait EuclideanDistanceSquared<T, O> {
     fn euclidean_distance_squared(&self, other: &Self) -> O;
 }
 
-pub trait IterateNeighbours
+pub trait IterateNeighboursContext {}
+
+pub trait IterateNeighbours<T: IterateNeighboursContext>
 where
     Self: std::marker::Sized,
 {
-    type Context;
     // fn neighbours(&self) -> dyn Iterator<Item = Self>;
-    fn neighbours(&self, context: &Self::Context) -> Vec<Self>;
+    fn neighbours(&self, context: &T) -> Vec<Self>;
 }
 
 pub trait Movement4Directions
@@ -35,8 +36,11 @@ where
     fn step_down(&self) -> Option<Self>;
 }
 
-impl<T: Movement4Directions> IterateNeighbours for T {
-    fn neighbours(&self, _context: &Self::Context) -> Vec<Self> {
+impl IterateNeighboursContext for () {}
+
+// NOTE(lubo): With no context, we can move as far as the range of the underlying type allows us.
+impl<T: Movement4Directions> IterateNeighbours<()> for T {
+    fn neighbours(&self, _context: &()) -> Vec<Self> {
         let mut results = vec![];
         if let Some(a) = self.step_right() {
             results.push(a);
@@ -52,6 +56,4 @@ impl<T: Movement4Directions> IterateNeighbours for T {
         }
         results
     }
-
-    type Context = ();
 }
