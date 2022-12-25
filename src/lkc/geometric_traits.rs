@@ -12,6 +12,7 @@ pub trait EuclideanDistanceSquared<T, O> {
 }
 
 pub trait IterateNeighboursContext {}
+impl IterateNeighboursContext for () {}
 
 pub trait IterateNeighbours<T: IterateNeighboursContext>
 where
@@ -36,24 +37,22 @@ where
     fn step_down(&self) -> Option<Self>;
 }
 
-impl IterateNeighboursContext for () {}
-
-// NOTE(lubo): With no context, we can move as far as the range of the underlying type allows us.
-impl<T: Movement4Directions> IterateNeighbours<()> for T {
-    fn neighbours(&self, _context: &()) -> Vec<Self> {
-        let mut results = vec![];
-        if let Some(a) = self.step_right() {
-            results.push(a);
-        }
-        if let Some(a) = self.step_up() {
-            results.push(a);
-        }
-        if let Some(a) = self.step_left() {
-            results.push(a);
-        }
-        if let Some(a) = self.step_down() {
-            results.push(a);
-        }
-        results
-    }
-}
+// // NOTE(lubo): With no context, we can move as far as the range of the underlying type allows us.
+// impl<T: Movement4Directions> IterateNeighbours<()> for T {
+//     fn neighbours(&self, _context: &()) -> Vec<Self> {
+//         let mut results = vec![];
+//         if let Some(a) = self.step_right() {
+//             results.push(a);
+//         }
+//         if let Some(a) = self.step_up() {
+//             results.push(a);
+//         }
+//         if let Some(a) = self.step_left() {
+//             results.push(a);
+//         }
+//         if let Some(a) = self.step_down() {
+//             results.push(a);
+//         }
+//         results
+//     }
+// }

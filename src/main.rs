@@ -1,7 +1,5 @@
 use std::{fs::File, io::BufReader, path::Path};
 
-use crate::{day17_optimized::Day17Optimized, day17_pretty::Day17};
-
 mod day1;
 mod day10;
 mod day11;
@@ -15,6 +13,7 @@ mod day16_part2;
 mod day17;
 mod day17_optimized;
 mod day17_pretty;
+mod day18;
 mod day2;
 mod day3;
 mod day4;
@@ -30,7 +29,7 @@ fn main() {
     let mut writer = std::io::Cursor::new(vec![]);
     println!("Hey!");
     let t0 = std::time::Instant::now();
-    Day17Optimized::<1_000_000_000_000>::solve_file("in17.txt", &mut writer);
+    Day::<1801>::solve_file("in18.txt", &mut writer);
     println!("Time: {:?}", t0.elapsed());
 }
 
@@ -398,5 +397,14 @@ mod tests {
         let output_raw = writer.into_inner();
         let output = std::str::from_utf8(&output_raw).unwrap().trim();
         assert_eq!(output, "3159");
+    }
+
+    #[test]
+    fn day17_opt_man_arr_big() {
+        let mut writer = std::io::Cursor::new(vec![]);
+        Day17Optimized::<1_000_000_000_000>::solve_file("in17.txt", &mut writer);
+        let output_raw = writer.into_inner();
+        let output = std::str::from_utf8(&output_raw).unwrap().trim();
+        assert_eq!(output, "1566272189352");
     }
 }

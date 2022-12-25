@@ -1,11 +1,22 @@
 use std::{
-    collections::{HashMap, HashSet},
+    collections::HashMap,
     io::{BufRead, BufReader},
 };
 
-use crate::{day17::Rock, lkc::cli::Progress, Problem};
+use crate::{day17::Rock, Problem};
 
 pub struct Day17Optimized<const C: usize>;
+
+struct PatternInfo {
+    itr: usize,
+    ffr: isize,
+}
+
+impl PatternInfo {
+    fn new(itr: usize, ffr: isize) -> Self {
+        Self { itr, ffr }
+    }
+}
 
 impl<const C: usize> Problem for Day17Optimized<C> {
     fn solve_buffer<T, W>(reader: BufReader<T>, writer: &mut W)
@@ -24,16 +35,8 @@ impl<const C: usize> Problem for Day17Optimized<C> {
             })
             .collect::<Vec<_>>();
         let wind_count = wind.len();
-        println!("Wind length: {}", wind_count);
         let mut wind = wind.iter().cycle();
 
-        let widths = [
-            Rock::width(0),
-            Rock::width(1),
-            Rock::width(2),
-            Rock::width(3),
-            Rock::width(4),
-        ];
         let heights = [
             Rock::height(0),
             Rock::height(1),
@@ -42,22 +45,20 @@ impl<const C: usize> Problem for Day17Optimized<C> {
             Rock::height(4),
         ];
         let rocks = [
-            Rock::construct_mask(0),
-            Rock::construct_mask(1),
-            Rock::construct_mask(2),
-            Rock::construct_mask(3),
-            Rock::construct_mask(4),
+            Rock::construct_mask(0) << 2,
+            Rock::construct_mask(1) << 2,
+            Rock::construct_mask(2) << 2,
+            Rock::construct_mask(3) << 2,
+            Rock::construct_mask(4) << 2,
         ];
-        let mut widths = widths.iter().cycle();
         let mut heights = heights.iter().cycle();
         let mut rocks = rocks.iter().cycle();
 
         let left_side = Rock::left_side_mask();
         let right_side = Rock::right_side_mask();
 
-        // const TOWER_SIZE: usize = 128;
-        const TOWER_SIZE: usize = 900 * 1024;
-        const TOWER_KEEP: usize = 2 * 1024;
+        const TOWER_SIZE: usize = 4 * 1024;
+        const TOWER_KEEP: usize = 512;
         const TOWER_ALMOSTFULL: usize = TOWER_SIZE - 10;
         const TOWER_ALMOSTFULLI: isize = TOWER_ALMOSTFULL as isize;
         const TOWER_DELETE: usize = TOWER_SIZE - TOWER_KEEP;
@@ -65,27 +66,23 @@ impl<const C: usize> Problem for Day17Optimized<C> {
         let mut tower = [0u8; TOWER_SIZE];
         tower[0] = 127;
 
-        let mut progress = Progress::new(C);
-
-        let mut heights_at_input_cycle_same_record = 0;
-        let mut heights_at_input_cycle = HashMap::new();
+        let mut pattern_skip_done = false;
+        let mut pattern_map = HashMap::new();
 
         let mut result = -1;
         let mut first_free_row = 1;
-        for iteration in 0..C {
+        let mut iteration = 0;
+        while iteration < C {
             let mut rock = *rocks.next().unwrap();
             let height = *heights.next().unwrap();
-            rock <<= 2;
 
-            let mut row = first_free_row + 3;
+            let mut row = first_free_row;
 
             if *wind.next().unwrap() {
                 rock <<= 1;
             } else {
                 rock >>= 1;
             }
-
-            row -= 1;
 
             if *wind.next().unwrap() {
                 if rock & right_side == 0 {
@@ -95,8 +92,6 @@ impl<const C: usize> Problem for Day17Optimized<C> {
                 // NOTE(lubo): Collision not possible on the left side yet.
                 rock >>= 1;
             }
-
-            row -= 1;
 
             if *wind.next().unwrap() {
                 if rock & right_side == 0 {
@@ -108,8 +103,6 @@ impl<const C: usize> Problem for Day17Optimized<C> {
                     rock >>= 1;
                 }
             }
-
-            row -= 1;
 
             if *wind.next().unwrap() {
                 if rock & right_side == 0 {
@@ -140,8 +133,6 @@ impl<const C: usize> Problem for Day17Optimized<C> {
 
                             tower.copy_within(TOWER_DELETE.., 0);
                             tower[TOWER_KEEP..].fill(0);
-
-                            progress.progress(iteration);
                         }
 
                         break;
@@ -171,80 +162,60 @@ impl<const C: usize> Problem for Day17Optimized<C> {
                 }
             }
 
-            if iteration % (wind_count * 5) == 0 {
+            if !pattern_skip_done && iteration > 0 && iteration % (wind_count * 5) == 0 {
                 // NOTE(lubo): Print
 
-                let mut heights = [0u8; 7];
-                let mut heights_done = 0;
-                for x in tower[..first_free_row as usize].iter().rev() {
-                    heights_done |= x;
+                unsafe {
+                    let a = *(tower.as_ptr().offset(first_free_row - 16) as *const u128);
+                    if let std::collections::hash_map::Entry::Vacant(e) = pattern_map.entry(a) {
+                        e.insert(PatternInfo::new(iteration, result + first_free_row));
+                    } else {
+                        let pattern = pattern_map.get(&a).unwrap();
 
-                    for (bit_id, height) in heights.iter_mut().enumerate() {
-                        let mask = 1 << bit_id;
-                        if heights_done & mask == 0 {
-                            if x & mask > 0 {
-                                heights_done |= mask;
-                            } else {
-                                *height += 1;
-                            }
-                        }
-                    }
+                        let itr_delta = iteration - pattern.itr;
+                        let ffr_delta = result + first_free_row - pattern.ffr;
 
-                    if heights_done & 0b1111111 == 0b1111111 {
-                        break;
-                    }
-                }
-
-                for h in heights.iter() {
-                    if *h > 90 {
-                        println!("HUUGGGGGGEEEEEEEEEEEE!!!!!! height {}", h);
-                    } else if *h > 100 {
-                        println!("Big height {}", h);
-                    }
-                }
-
-                if let std::collections::hash_map::Entry::Vacant(e) =
-                    heights_at_input_cycle.entry(heights)
-                {
-                    e.insert(1);
-                    // println!("Inserted {:?}!", heights);
-                } else {
-                    *heights_at_input_cycle.get_mut(&heights).unwrap() += 1;
-                    if *heights_at_input_cycle.get_mut(&heights).unwrap()
-                        > heights_at_input_cycle_same_record
-                    {
-                        heights_at_input_cycle_same_record =
-                            *heights_at_input_cycle.get_mut(&heights).unwrap();
                         println!(
-                            "Matched {:?} a total of {} times @ iteration {}!",
-                            heights,
-                            heights_at_input_cycle.get_mut(&heights).unwrap(),
-                            iteration
+                            "Repeated pattern {}  @ iteration {} itr_delta {} ffr_delta {}",
+                            a, iteration, itr_delta, ffr_delta,
                         );
-                        #[cfg(disabled)]
-                        {
-                            println!("+--------------+");
-                            for x in tower[std::cmp::max(0, first_free_row - 20) as usize
-                                ..first_free_row as usize + 3]
-                                .iter()
-                                .rev()
-                            {
-                                // println!("{:#09b}", x);
-                                print!("|");
-                                for bit_id in 0..7 {
-                                    if x & (1 << bit_id) > 0 {
-                                        print!("[]");
-                                    } else {
-                                        print!("  ");
-                                    }
-                                }
-                                println!("|");
-                            }
-                            println!("+--------------+");
+
+                        let mut skipped_cycles = 0;
+                        while iteration + itr_delta < C {
+                            iteration += itr_delta;
+                            result += ffr_delta;
+                            skipped_cycles += 1;
                         }
+
+                        println!("Skipped {} iterations!", skipped_cycles * itr_delta);
+                        pattern_skip_done = true;
                     }
+                }
+
+                #[cfg(disabled)]
+                {
+                    println!("+--------------+");
+                    for x in tower[std::cmp::max(0, first_free_row - 20) as usize
+                        ..first_free_row as usize + 3]
+                        .iter()
+                        .rev()
+                    {
+                        // println!("{:#09b}", x);
+                        print!("|");
+                        for bit_id in 0..7 {
+                            if x & (1 << bit_id) > 0 {
+                                print!("[]");
+                            } else {
+                                print!("  ");
+                            }
+                        }
+                        println!("|");
+                    }
+                    println!("+--------------+");
                 }
             }
+
+            iteration += 1;
         }
 
         result += first_free_row;

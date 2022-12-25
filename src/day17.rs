@@ -1,4 +1,4 @@
-use crate::lkc::{line::LineV2i32, v2::V2};
+use crate::lkc::{line::LineV2i32, vector::V2};
 
 pub struct Rock;
 impl Rock {
@@ -24,28 +24,28 @@ impl Rock {
     }
     pub fn construct(t: usize) -> Vec<LineV2i32> {
         match t {
-            0 => vec![LineV2i32::new(V2::new(0, 0), V2::new(3, 0))],
+            0 => vec![LineV2i32::new(V2::from_xy(0, 0), V2::from_xy(3, 0))],
             1 => vec![
-                LineV2i32::new(V2::new(0, 1), V2::new(2, 1)),
-                LineV2i32::new(V2::new(1, 0), V2::new(1, 2)),
+                LineV2i32::new(V2::from_xy(0, 1), V2::from_xy(2, 1)),
+                LineV2i32::new(V2::from_xy(1, 0), V2::from_xy(1, 2)),
             ],
             2 => vec![
-                LineV2i32::new(V2::new(0, 0), V2::new(2, 0)),
-                LineV2i32::new(V2::new(2, 0), V2::new(2, 2)),
+                LineV2i32::new(V2::from_xy(0, 0), V2::from_xy(2, 0)),
+                LineV2i32::new(V2::from_xy(2, 0), V2::from_xy(2, 2)),
             ],
-            3 => vec![LineV2i32::new(V2::new(0, 0), V2::new(0, 3))],
+            3 => vec![LineV2i32::new(V2::from_xy(0, 0), V2::from_xy(0, 3))],
             4 => vec![
-                LineV2i32::new(V2::new(0, 0), V2::new(1, 0)),
-                LineV2i32::new(V2::new(0, 1), V2::new(1, 1)),
+                LineV2i32::new(V2::from_xy(0, 0), V2::from_xy(1, 0)),
+                LineV2i32::new(V2::from_xy(0, 1), V2::from_xy(1, 1)),
             ],
             _ => panic!(),
         }
     }
     pub fn left_side() -> Vec<LineV2i32> {
-        vec![LineV2i32::new(V2::new(0, 0), V2::new(0, 3))]
+        vec![LineV2i32::new(V2::from_xy(0, 0), V2::from_xy(0, 3))]
     }
     pub fn right_side() -> Vec<LineV2i32> {
-        vec![LineV2i32::new(V2::new(6, 0), V2::new(6, 3))]
+        vec![LineV2i32::new(V2::from_xy(6, 0), V2::from_xy(6, 3))]
     }
     fn get_bit_value(x: i32, y: i32) -> u32 {
         assert!(x >= 0);
@@ -59,10 +59,9 @@ impl Rock {
         let mut bit_rep = 0;
         for line in blueprint {
             for p in line.iter() {
-                bit_rep |= Self::get_bit_value(p.x, p.y);
+                bit_rep |= Self::get_bit_value(p.x(), p.y());
             }
         }
-        println!("{:#032b}", bit_rep);
 
         bit_rep
     }

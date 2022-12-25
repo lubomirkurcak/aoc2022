@@ -7,7 +7,7 @@ use crate::{
         cli::Progress,
         explore::{Exploration, ExploreSignals},
         line::LineV2i32,
-        v2::V2,
+        vector::V2,
     },
     Problem,
 };
@@ -58,7 +58,7 @@ impl<const C: usize> Problem for Day17<C> {
         let mut first_free_row = 0;
         let mut first_non_full_row = 0;
         for (iteration, rock_type) in (0..5).cycle().enumerate().take(C) {
-            let mut p = V2::new(2, first_free_row + 3);
+            let mut p = V2::from_xy(2, first_free_row + 3);
             let blueprint = Rock::construct(rock_type);
             let width = Rock::width(rock_type);
             let height = Rock::height(rock_type);
@@ -68,22 +68,22 @@ impl<const C: usize> Problem for Day17<C> {
             assert!(check(&map, &blueprint, p));
 
             loop {
-                let x = (p.x + *wind.next().unwrap()).clamp(0, 7 - width);
-                if p.x != x && check(&map, &blueprint, V2::new(x, p.y)) {
-                    p.x = x;
+                let x = (p.x() + *wind.next().unwrap()).clamp(0, 7 - width);
+                if p.x() != x && check(&map, &blueprint, V2::from_xy(x, p.y())) {
+                    p.values[0] = x;
                 }
 
-                if p.y > 0 && check(&map, &blueprint, V2::new(p.x, p.y - 1)) {
-                    p.y -= 1;
+                if p.y() > 0 && check(&map, &blueprint, V2::from_xy(p.x(), p.y() - 1)) {
+                    p.values[1] -= 1;
                 } else {
                     draw(&mut map, &blueprint, p);
-                    first_free_row = std::cmp::max(first_free_row, p.y + height);
+                    first_free_row = std::cmp::max(first_free_row, p.y() + height);
 
                     loop {
                         let a = map
                             .line_iter(
-                                V2::new(0, first_non_full_row),
-                                V2::new(6, first_non_full_row),
+                                V2::from_xy(0, first_non_full_row),
+                                V2::from_xy(6, first_non_full_row),
                             )
                             .find(|&x| map.get(x).unwrap() == &'.');
 
@@ -93,7 +93,7 @@ impl<const C: usize> Problem for Day17<C> {
                             exp.explore(
                                 a,
                                 |x, map| {
-                                    if x.y >= first_free_row {
+                                    if x.y() >= first_free_row {
                                         failed = true;
                                         return ExploreSignals::ReachedGoal;
                                     }
@@ -101,7 +101,7 @@ impl<const C: usize> Problem for Day17<C> {
                                     // println!("{}", x);
                                     ExploreSignals::Explore
                                 },
-                                |x, map| x.y <= first_free_row && map.get(*x).unwrap() == &'.',
+                                |x, map| x.y() <= first_free_row && map.get(*x).unwrap() == &'.',
                             );
                             // NOTE(lubo): Exploration returns the map
                             map = exp.context;

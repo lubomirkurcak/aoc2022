@@ -1,33 +1,34 @@
 use std::ops::Sub;
 
-use super::{geometric_traits::CoverObject, v2::V2};
+use super::{geometric_traits::CoverObject, vector::Vector};
 
 #[derive(Debug, PartialEq, Eq)]
-pub struct AABB2<T> {
-    pub min: V2<T>,
-    pub max: V2<T>,
+pub struct Aabb<const C: usize, T> {
+    pub min: Vector<C, T>,
+    pub max: Vector<C, T>,
 }
 
-impl<T: std::cmp::Ord + Copy> CoverObject<V2<T>> for AABB2<T> {
-    fn cover(&mut self, point: &V2<T>) {
-        self.min.x = std::cmp::min(self.min.x, point.x);
-        self.min.y = std::cmp::min(self.min.y, point.y);
-        self.max.x = std::cmp::max(self.max.x, point.x);
-        self.max.y = std::cmp::max(self.max.y, point.y);
+impl<const C: usize, T: std::cmp::Ord + Copy> CoverObject<Vector<C, T>> for Aabb<C, T> {
+    fn cover(&mut self, point: &Vector<C, T>) {
+        #[allow(clippy::needless_range_loop)]
+        for x in 0..C {
+            self.min.values[x] = std::cmp::min(self.min.values[x], point.values[x]);
+            self.max.values[x] = std::cmp::max(self.max.values[x], point.values[x]);
+        }
     }
 }
 
-impl<T> AABB2<T>
+impl<const C: usize, T> Aabb<C, T>
 where
     T: std::cmp::Ord + Copy,
-    V2<T>: Sub<Output = V2<T>>,
+    Vector<C, T>: Sub<Output = Vector<C, T>>,
 {
-    pub fn new(min: V2<T>, max: V2<T>) -> Self {
+    pub fn new(min: Vector<C, T>, max: Vector<C, T>) -> Self {
         Self { min, max }
     }
 
     #[allow(dead_code)]
-    pub fn covering(points: &[V2<T>]) -> Option<Self> {
+    pub fn covering(points: &[Vector<C, T>]) -> Option<Self> {
         let mut iter = points.iter();
         if let Some(a) = iter.next() {
             let mut result = Self::new(*a, *a);
@@ -41,19 +42,26 @@ where
             None
         }
     }
-    pub fn dim(&self) -> V2<T> {
+    pub fn dim(&self) -> Vector<C, T> {
         self.max - self.min
     }
 }
 
+pub type Aabb2<T> = Aabb<2, T>;
+pub type Aabb3<T> = Aabb<3, T>;
+pub type Aabb4<T> = Aabb<4, T>;
+
 #[cfg(test)]
 mod tests {
-    use crate::lkc::{aabb::AABB2, v2::V2};
+    use crate::lkc::{aabb::Aabb2, vector::V2};
 
     #[test]
     fn aabb_covering() {
-        let points = vec![V2::new(2, 0), V2::new(0, 2)];
-        let aabb = AABB2::covering(&points);
-        assert_eq!(aabb.unwrap(), AABB2::new(V2::new(0, 0), V2::new(2, 2)));
+        let points = vec![V2::from_xy(2, 0), V2::from_xy(0, 2)];
+        let aabb = Aabb2::covering(&points);
+        assert_eq!(
+            aabb.unwrap(),
+            Aabb2::new(V2::from_xy(0, 0), V2::from_xy(2, 2))
+        );
     }
 }

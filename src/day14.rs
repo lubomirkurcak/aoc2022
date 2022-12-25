@@ -4,10 +4,8 @@ use crate::lkc::array2d::Array2d;
 use crate::lkc::transformations::{Transform, Translation};
 
 use crate::lkc::geometric_traits::{CoverObject, Movement4Directions};
-use crate::{
-    lkc::{aabb::AABB2, v2::Scalar, v2::V2},
-    Problem,
-};
+use crate::lkc::vector::{Scalar, V2};
+use crate::{lkc::aabb::Aabb2, Problem};
 
 pub struct Day14<const C: bool>;
 
@@ -17,8 +15,8 @@ impl<const C: bool> Problem for Day14<C> {
         T: std::io::Read,
         W: std::io::Write,
     {
-        let sand_coords = V2::new(500, 0);
-        let mut aabb = AABB2::new(sand_coords, sand_coords);
+        let sand_coords = V2::from_xy(500, 0);
+        let mut aabb = Aabb2::new(sand_coords, sand_coords);
 
         let lines = reader.lines().map(|x| x.unwrap()).collect::<Vec<_>>();
         for line in lines.iter() {
@@ -28,19 +26,19 @@ impl<const C: bool> Problem for Day14<C> {
             }
         }
 
-        let floor_y = aabb.max.y + 2;
+        let floor_y = aabb.max.y() + 2;
         let sand_height = floor_y;
-        let floor_x_min = sand_coords.x - sand_height - 1;
-        let floor_x_max = sand_coords.x + sand_height + 1;
-        let floor_a = V2::new(floor_x_min, floor_y);
-        let floor_b = V2::new(floor_x_max, floor_y);
+        let floor_x_min = sand_coords.x() - sand_height - 1;
+        let floor_x_max = sand_coords.x() + sand_height + 1;
+        let floor_a = V2::from_xy(floor_x_min, floor_y);
+        let floor_b = V2::from_xy(floor_x_max, floor_y);
         aabb.cover(&floor_a);
         aabb.cover(&floor_b);
 
-        let map_dim = aabb.dim() + V2::new(1, 1) + Scalar::new(4) * V2::new(1, 1);
-        let t = Translation::new(aabb.min - V2::new(2, 2));
+        let map_dim = aabb.dim() + V2::from_xy(1, 1) + Scalar::new(4) * V2::from_xy(1, 1);
+        let t = Translation::new(aabb.min - V2::from_xy(2, 2));
 
-        let mut map = Array2d::new(map_dim.x as usize, map_dim.y as usize, '.');
+        let mut map = Array2d::new(map_dim.x() as usize, map_dim.y() as usize, '.');
         let sand_coords = t.inverse_transform(sand_coords);
         map.set(sand_coords, '+');
         let floor_a = t.inverse_transform(floor_a);

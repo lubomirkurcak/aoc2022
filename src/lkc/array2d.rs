@@ -6,9 +6,9 @@ use std::{
 
 use super::{
     geometric_traits::{IterateNeighbours, IterateNeighboursContext, Movement4Directions},
-    line_iterator::LineIterator,
+    line_iterator::{LineIterator, LineIterator2},
     linear_index::LinearIndex,
-    v2::{V2i32, V2usize, V2},
+    vector::{V2i32, V2usize, V2},
 };
 
 #[derive(Clone)]
@@ -22,7 +22,7 @@ impl<T: Display> Display for Array2d<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for y in (0..self.height).rev() {
             for x in 0..self.width {
-                write!(f, "{}", self.get(V2::new(x, y)).unwrap())?;
+                write!(f, "{}", self.get(V2::from_xy(x, y)).unwrap())?;
             }
             writeln!(f)?;
         }
@@ -49,8 +49,8 @@ impl Array2d<char> {
 
 impl<T> LinearIndex<V2usize> for Array2d<T> {
     fn index(&self, i: V2usize) -> Option<usize> {
-        if i.x < self.width && i.y < self.height {
-            Some(i.y * self.width + i.x)
+        if i.x() < self.width && i.y() < self.height {
+            Some(i.y() * self.width + i.x())
         } else {
             None
         }
@@ -60,21 +60,25 @@ impl<T> LinearIndex<V2usize> for Array2d<T> {
         let x = i % self.width;
         let y = i / self.width;
         if x < self.width && y < self.height {
-            Some(V2usize::new(x, y))
+            Some(V2usize::from_xy(x, y))
         } else {
             None
         }
     }
 
     fn is_in_bounds(&self, i: V2usize) -> bool {
-        i.x < self.width && i.y < self.height
+        i.x() < self.width && i.y() < self.height
     }
 }
 
 impl<T> LinearIndex<V2i32> for Array2d<T> {
     fn index(&self, i: V2i32) -> Option<usize> {
-        if i.x >= 0 && i.y >= 0 && (i.x as usize) < self.width && (i.y as usize) < self.height {
-            Some((i.y as usize) * self.width + (i.x as usize))
+        if i.x() >= 0
+            && i.y() >= 0
+            && (i.x() as usize) < self.width
+            && (i.y() as usize) < self.height
+        {
+            Some((i.y() as usize) * self.width + (i.x() as usize))
         } else {
             None
         }
@@ -84,17 +88,17 @@ impl<T> LinearIndex<V2i32> for Array2d<T> {
         let x = i % self.width;
         let y = i / self.width;
         if x < self.width && y < self.height {
-            Some(V2i32::new(x as i32, y as i32))
+            Some(V2i32::from_xy(x as i32, y as i32))
         } else {
             None
         }
     }
 
     fn is_in_bounds(&self, i: V2i32) -> bool {
-        i.x >= 0
-            && i.y >= 0
-            && i.x < self.width.try_into().unwrap()
-            && i.y < self.height.try_into().unwrap()
+        i.x() >= 0
+            && i.y() >= 0
+            && i.x() < self.width.try_into().unwrap()
+            && i.y() < self.height.try_into().unwrap()
     }
 }
 
@@ -186,7 +190,7 @@ impl<T> Array2d<T> {
 }
 
 impl<T> Array2d<T> {
-    pub fn line_iter(&self, p0: V2i32, p1: V2i32) -> LineIterator {
+    pub fn line_iter(&self, p0: V2i32, p1: V2i32) -> LineIterator2 {
         LineIterator::new(p0, p1)
     }
 }

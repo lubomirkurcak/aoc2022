@@ -2,7 +2,7 @@ use std::{collections::HashSet, io::prelude::*, io::BufReader};
 
 use crate::{
     lkc::{
-        geometric_traits::ManhattanDistance, interval_set::IntervalSet, math::InclusiveMin, v2::V2,
+        geometric_traits::ManhattanDistance, interval_set::IntervalSet, math::InclusiveMin, vector::V2,
     },
     Problem,
 };
@@ -20,11 +20,11 @@ where
             let sx: i32 = a[0].trim().parse().unwrap();
             let a = a[1].split(": closest beacon is at x=").collect::<Vec<_>>();
             let sy: i32 = a[0].trim().parse().unwrap();
-            let s = V2::new(sx, sy);
+            let s = V2::from_xy(sx, sy);
             let a = a[1].split(", y=").collect::<Vec<_>>();
             let bx: i32 = a[0].trim().parse().unwrap();
             let by: i32 = a[1].trim().parse().unwrap();
-            let b = V2::new(bx, by);
+            let b = V2::from_xy(bx, by);
             (s, b)
         })
         .collect::<Vec<_>>()
@@ -56,19 +56,19 @@ impl<const Y: i32> Problem for Day15<DefinitelyNoBeaconsAtLine<Y>> {
 
         let objects_on_line = objects
             .iter()
-            .filter(|p| p.y == Y)
-            .map(|p| p.x)
+            .filter(|p| p.y() == Y)
+            .map(|p| p.x())
             .collect::<HashSet<_>>();
 
         let mut interval_set = IntervalSet::new();
 
         for (s, b) in a.iter() {
             let range = s.manhattan_distance(b);
-            let distance_to_line = (s.y - Y).abs();
+            let distance_to_line = (s.y() - Y).abs();
             let range_remaining = range - distance_to_line;
             if range_remaining > 0 {
-                let range_x_min = s.x - range_remaining;
-                let range_x_max = s.x + range_remaining;
+                let range_x_min = s.x() - range_remaining;
+                let range_x_max = s.x() + range_remaining;
                 let covering_line_x = range_x_min..range_x_max + 1;
                 interval_set.union(covering_line_x);
             }
@@ -102,11 +102,11 @@ impl<const C: i32> Problem for Day15<FindTheLoneOutOfRangeTile<C>> {
 
             for (s, b) in a.iter() {
                 let range = s.manhattan_distance(b);
-                let distance_to_line = (s.y - line_y).abs();
+                let distance_to_line = (s.y() - line_y).abs();
                 let range_remaining = range - distance_to_line;
                 if range_remaining > 0 {
-                    let range_x_min = s.x - range_remaining;
-                    let range_x_max = s.x + range_remaining;
+                    let range_x_min = s.x() - range_remaining;
+                    let range_x_max = s.x() + range_remaining;
                     let covering_line_x = range_x_min..range_x_max + 1;
                     interval_set.union(covering_line_x);
                 }

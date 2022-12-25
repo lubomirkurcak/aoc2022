@@ -1,20 +1,23 @@
-use super::{line_iterator::LineIterator, v2::V2i32};
+use super::{line_iterator::LineIterator, vector::Vector};
 
 pub struct Line<T> {
     pub start: T,
     pub end: T,
 }
-
 impl<T> Line<T> {
     pub fn new(start: T, end: T) -> Self {
         Self { start, end }
     }
 }
 
-impl LineV2i32 {
-    pub fn iter(&self) -> LineIterator {
+pub type LineVector<const C: usize, T> = Line<Vector<C, T>>;
+pub type LineVectori32<const C: usize> = LineVector<C, i32>;
+
+impl<const C: usize> LineVectori32<C> {
+    pub fn iter(&self) -> LineIterator<C> {
         LineIterator::new(self.start, self.end)
     }
 }
 
-pub type LineV2i32 = Line<V2i32>;
+pub type LineV2i32 = LineVectori32<2>;
+pub type LineV3i32 = LineVectori32<3>;
