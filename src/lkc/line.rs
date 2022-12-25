@@ -20,4 +20,3 @@ impl<const C: usize> LineVectori32<C> {
 }
 
 pub type LineV2i32 = LineVectori32<2>;
-pub type LineV3i32 = LineVectori32<3>;

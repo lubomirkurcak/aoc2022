@@ -1,6 +1,6 @@
 use std::{io::prelude::*, io::BufReader, str::FromStr};
 
-use crate::lkc::array2d::Array2d;
+use crate::lkc::arraynd::Array2d;
 use crate::lkc::transformations::{Transform, Translation};
 
 use crate::lkc::geometric_traits::{CoverObject, Movement4Directions};

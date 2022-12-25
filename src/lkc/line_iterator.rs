@@ -32,6 +32,7 @@ impl<const C: usize> Iterator for LineIterator<C> {
 
             for i in 0..C {
                 if dir.values[i] != 0 {
+                    #[allow(clippy::unnecessary_to_owned)]
                     for mut opt in self.step_options.to_vec() {
                         debug_assert_eq!(opt.values[i], 0);
                         opt.values[i] = dir.values[i];
@@ -61,8 +62,8 @@ impl<const C: usize> Iterator for LineIterator<C> {
     }
 }
 
-pub type LineIterator2 = LineIterator<2>;
-pub type LineIterator3 = LineIterator<3>;
+// pub type LineIterator2 = LineIterator<2>;
+// pub type LineIterator3 = LineIterator<3>;
 
 // impl<const C: usize> Iterator for LineIterator<C> {
 //     type Item = Vector<C, i32>;

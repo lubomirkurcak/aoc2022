@@ -1,5 +1,5 @@
 pub mod aabb;
-pub mod array2d;
+pub mod arraynd;
 mod dumb;
 pub mod explore;
 pub mod geometric_traits;

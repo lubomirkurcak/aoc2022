@@ -3,7 +3,7 @@ use std::io::{BufRead, BufReader};
 use crate::{
     day17::Rock,
     lkc::{
-        array2d::Array2d,
+        arraynd::Array2d,
         cli::Progress,
         explore::{Exploration, ExploreSignals},
         line::LineV2i32,

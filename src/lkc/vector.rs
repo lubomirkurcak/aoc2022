@@ -165,7 +165,7 @@ where
     fn manhattan_distance(&self, other: &Self) -> T {
         let delta = *other - *self;
         let mut result = delta.values[0].abs().unwrap();
-        for i in 0..C {
+        for i in 1..C {
             result = result + delta.values[i].abs().unwrap();
         }
         result
@@ -218,15 +218,15 @@ pub type V2<T> = Vector<2, T>;
 pub type V3<T> = Vector<3, T>;
 pub type V4<T> = Vector<4, T>;
 
-pub type V2i32 = V2<i32>;
+// pub type V2i32 = V2<i32>;
 pub type V2usize = V2<usize>;
-pub type V2f32 = V2<f32>;
-pub type V3i32 = V3<i32>;
-pub type V3usize = V3<usize>;
-pub type V3f32 = V3<f32>;
-pub type V4i32 = V4<i32>;
-pub type V4usize = V4<usize>;
-pub type V4f32 = V4<f32>;
+// pub type V2f32 = V2<f32>;
+// pub type V3i32 = V3<i32>;
+// pub type V3usize = V3<usize>;
+// pub type V3f32 = V3<f32>;
+// pub type V4i32 = V4<i32>;
+// pub type V4usize = V4<usize>;
+// pub type V4f32 = V4<f32>;
 
 impl<T: Copy> V2<T> {
     pub fn from_xy(x: T, y: T) -> Self {

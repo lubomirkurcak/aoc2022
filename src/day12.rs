@@ -1,7 +1,7 @@
 use std::{collections::HashSet, io::BufReader};
 
 use crate::{
-    lkc::{array2d::Array2d, geometric_traits::IterateNeighbours, vector::V2usize},
+    lkc::{arraynd::Array2d, geometric_traits::IterateNeighbours, vector::V2usize},
     Day, Problem,
 };
 
