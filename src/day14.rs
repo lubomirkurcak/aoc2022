@@ -38,7 +38,7 @@ impl<const C: bool> Problem for Day14<C> {
         let map_dim = aabb.dim() + V2::from_xy(1, 1) + Scalar::new(4) * V2::from_xy(1, 1);
         let t = Translation::new(aabb.min - V2::from_xy(2, 2));
 
-        let mut map = Array2d::new(map_dim.x() as usize, map_dim.y() as usize, '.');
+        let mut map = Array2d::with_dimensions(map_dim.x() as usize, map_dim.y() as usize, '.');
         let sand_coords = t.inverse_transform(sand_coords);
         map.set(sand_coords, '+');
         let floor_a = t.inverse_transform(floor_a);

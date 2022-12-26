@@ -20,7 +20,7 @@ pub trait PointKeyValue {
 
     // NOTE(lubo): Less means WORSE and should NOT be explored.
     // NOTE(lubo): Greater means BETTER and SHOULD be explored.
-    fn compare_values(a: &Self::V, b: &Self::V) -> Option<Ordering>;
+    fn compare_values(k: &Self::K, a: &Self::V, b: &Self::V) -> Option<Ordering>;
 }
 
 #[derive(Debug)]
@@ -42,31 +42,35 @@ where
 
     pub fn explore<F, G>(&mut self, start: P, mut goal: G, mut filter_neighbours: F)
     where
-        F: FnMut(&P, &mut S) -> bool,
+        F: FnMut(&P, &P, &mut S) -> bool,
         G: FnMut(&P, &mut S) -> ExploreSignals,
     {
         self.explore_advanced(
             start,
             (),
             |p, _data, context| goal(p, context),
-            |p, _data, context| filter_neighbours(p, context),
+            |p, n, _data, context| filter_neighbours(p, n, context),
         )
     }
 
     // NOTE(lubo): Uses a hashset to avoid identical states
     pub fn explore_avoid_identical<F, G>(&mut self, start: P, mut goal: G, mut filter_neighbours: F)
     where
-        F: FnMut(&P, &mut S) -> bool,
+        F: FnMut(&P, &P, &mut S) -> bool,
         G: FnMut(&P, &mut S) -> ExploreSignals,
     {
         self.explore_advanced(
             start,
             HashSet::new(),
             |p, data, context| {
-                data.insert(*p);
-                goal(p, context)
+                if data.contains(p) {
+                    ExploreSignals::Skip
+                } else {
+                    data.insert(*p);
+                    goal(p, context)
+                }
             },
-            |p, data, context| !data.contains(p) && filter_neighbours(p, context),
+            |p, n, data, context| !data.contains(n) && filter_neighbours(p, n, context),
         )
     }
 
@@ -77,7 +81,7 @@ where
         mut goal: G,
         mut filter_neighbours: F,
     ) where
-        F: FnMut(&P, &mut T, &mut S) -> bool,
+        F: FnMut(&P, &P, &mut T, &mut S) -> bool,
         G: FnMut(&P, &mut T, &mut S) -> ExploreSignals,
     {
         // let mut open = StackBag::new();
@@ -94,10 +98,10 @@ where
                 ExploreSignals::Skip => continue,
             }
 
-            for neighbour in p.neighbours(&self.context) {
-                if filter_neighbours(&neighbour, &mut data, &mut self.context) {
-                    // open.put(neighbour);
-                    open.push(neighbour);
+            for n in p.neighbours(&self.context) {
+                if filter_neighbours(&p, &n, &mut data, &mut self.context) {
+                    // open.put(n);
+                    open.push(n);
                 }
             }
         }
@@ -128,7 +132,7 @@ where
     //   Point::compare_values(a: &V, b &V) => Some(a < b)
     pub fn explore_avoid_worse<F, G>(&mut self, start: P, mut goal: G, mut filter_neighbours: F)
     where
-        F: FnMut(&P, &mut S) -> bool,
+        F: FnMut(&P, &P, &mut S) -> bool,
         G: FnMut(&P, &mut S) -> ExploreSignals,
     {
         self.explore_advanced(
@@ -139,7 +143,7 @@ where
                 let v = p.get_value();
 
                 if let Some(&old_v) = data.get(&k) {
-                    if let Some(ordering) = P::compare_values(&v, &old_v) {
+                    if let Some(ordering) = P::compare_values(&k, &v, &old_v) {
                         match ordering {
                             Ordering::Less => return ExploreSignals::Skip,
                             Ordering::Equal => (),
@@ -154,17 +158,17 @@ where
 
                 goal(p, context)
             },
-            |p, data, context| {
-                let k = p.get_key();
-                let v = p.get_value();
+            |p, n, data, context| {
+                let k = n.get_key();
+                let v = n.get_value();
 
                 if let Some(&old_v) = data.get(&k) {
-                    if P::compare_values(&v, &old_v) == Some(Ordering::Less) {
+                    if P::compare_values(&k, &v, &old_v) == Some(Ordering::Less) {
                         return false;
                     }
                 }
 
-                filter_neighbours(p, context)
+                filter_neighbours(p, n, context)
             },
         )
     }

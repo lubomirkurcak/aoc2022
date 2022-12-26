@@ -1,6 +1,6 @@
 pub mod aabb;
 pub mod arraynd;
-mod dumb;
+mod sketch;
 pub mod explore;
 pub mod geometric_traits;
 pub mod interval_set;

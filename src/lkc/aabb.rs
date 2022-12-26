@@ -2,7 +2,7 @@ use std::ops::Sub;
 
 use super::{geometric_traits::CoverObject, vector::Vector};
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub struct Aabb<const C: usize, T> {
     pub min: Vector<C, T>,
     pub max: Vector<C, T>,

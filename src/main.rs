@@ -1,5 +1,7 @@
 use std::{fs::File, io::BufReader, path::Path};
 
+use crate::day19::Day19;
+
 mod day1;
 mod day10;
 mod day11;
@@ -14,6 +16,7 @@ mod day17;
 mod day17_optimized;
 mod day17_pretty;
 mod day18;
+mod day19;
 mod day2;
 mod day3;
 mod day4;
@@ -29,7 +32,10 @@ fn main() {
     let mut writer = std::io::Cursor::new(vec![]);
     println!("Hey!");
     let t0 = std::time::Instant::now();
-    Day::<1801>::solve_file("in18.txt", &mut writer);
+    //Day19::<24, false>::solve_file("in19_small.txt", &mut writer);
+    // Day19::<32, true>::solve_file("in19_small.txt", &mut writer);
+    //Day19::<24, false>::solve_file("in19.txt", &mut writer);
+    Day19::<32, true>::solve_file("in19.txt", &mut writer);
     println!("Time: {:?}", t0.elapsed());
 }
 
@@ -382,7 +388,7 @@ mod tests {
     }
 
     #[test]
-    fn day17_pretty_but_bad() {
+    fn day17_tetris_pretty_but_bad() {
         let mut writer = std::io::Cursor::new(vec![]);
         Day17::<2022>::solve_file("in17.txt", &mut writer);
         let output_raw = writer.into_inner();
@@ -391,7 +397,7 @@ mod tests {
     }
 
     #[test]
-    fn day17_opt_man_arr() {
+    fn day17_tetris_opt() {
         let mut writer = std::io::Cursor::new(vec![]);
         Day17Optimized::<2022>::solve_file("in17.txt", &mut writer);
         let output_raw = writer.into_inner();
@@ -400,11 +406,29 @@ mod tests {
     }
 
     #[test]
-    fn day17_opt_man_arr_big() {
+    fn day17_tetris_opt_big() {
         let mut writer = std::io::Cursor::new(vec![]);
         Day17Optimized::<1_000_000_000_000>::solve_file("in17.txt", &mut writer);
         let output_raw = writer.into_inner();
         let output = std::str::from_utf8(&output_raw).unwrap().trim();
         assert_eq!(output, "1566272189352");
+    }
+
+    #[test]
+    fn day18_surface_area() {
+        let mut writer = std::io::Cursor::new(vec![]);
+        Day::<1801>::solve_file("in18.txt", &mut writer);
+        let output_raw = writer.into_inner();
+        let output = std::str::from_utf8(&output_raw).unwrap().trim();
+        assert_eq!(output, "4332");
+    }
+
+    #[test]
+    fn day18_outside_surface_area() {
+        let mut writer = std::io::Cursor::new(vec![]);
+        Day::<1802>::solve_file("in18.txt", &mut writer);
+        let output_raw = writer.into_inner();
+        let output = std::str::from_utf8(&output_raw).unwrap().trim();
+        assert_eq!(output, "2524");
     }
 }

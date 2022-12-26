@@ -1,4 +1,4 @@
-use std::{cmp::max, io::prelude::*, io::BufReader};
+use std::{io::prelude::*, io::BufReader};
 
 use crate::{Day, Problem};
 
@@ -15,7 +15,7 @@ impl Problem for Day<0> {
         for line in reader.lines().map(|x| x.unwrap()) {
             // writeln!("{}", line);
 
-            result = max(result, line.len());
+            // result = std::cmp::max(result, line.len());
         }
 
         writeln!(writer, "{}", result).unwrap();

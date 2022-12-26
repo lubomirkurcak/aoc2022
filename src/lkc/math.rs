@@ -148,6 +148,10 @@ impl<T: Copy + Ord> Interval for std::ops::Range<T> {
     }
 }
 
+pub fn triangle_numbers(n: i32) -> i32 {
+    n * (n + 1) / 2
+}
+
 #[cfg(test)]
 mod tests {
     use crate::lkc::math::Interval;

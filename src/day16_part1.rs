@@ -38,7 +38,7 @@ impl PointKeyValue for Point {
         (self.time, self.pressure_released)
     }
 
-    fn compare_values(a: &Self::V, b: &Self::V) -> Option<Ordering> {
+    fn compare_values(_k: &Self::K, a: &Self::V, b: &Self::V) -> Option<Ordering> {
         let (a_time, a_pressure) = a;
         let (b_time, b_pressure) = b;
         if a_time >= b_time && a_pressure <= b_pressure {
@@ -158,7 +158,7 @@ impl Problem for Day<1601> {
 
                 ExploreSignals::Explore
             },
-            |_p, _rooms| true,
+            |_p, _n, _rooms| true,
         );
 
         writeln!(writer, "{}", max_pressure_released).unwrap();

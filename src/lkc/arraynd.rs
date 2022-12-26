@@ -5,74 +5,109 @@ use std::{
 };
 
 use super::{
-    geometric_traits::{IterateNeighbours, IterateNeighboursContext, Movement4Directions},
+    geometric_traits::{IterateNeighbours, IterateNeighboursContext},
     line_iterator::LineIterator,
     linear_index::LinearIndex,
-    vector::{Vector, V2},
+    vector::Vector,
 };
 
 #[derive(Clone)]
 pub struct ArrayNd<const N: usize, T> {
     pub data: Vec<T>,
     pub dims: [usize; N],
+    pub dim_strides: [usize; N],
 }
-impl<const N: usize, T> LinearIndex<Vector<N, usize>> for ArrayNd<N, T> {
-    fn index(&self, i: Vector<N, usize>) -> Option<usize> {
-        if self.is_in_bounds(i) {
-            let mut result = 0;
-            for j in (0..N).rev() {
-                result *= self.dims[j];
-                result += i.values[j];
-            }
-            Some(result)
-        } else {
-            None
+
+impl<const C: usize, T: Copy> ArrayNd<C, T> {
+    pub fn new<U: Copy + TryInto<usize>>(dims: [U; C], default: T) -> Self {
+        let mut d = [0; C];
+        let mut current_stride = 1;
+        let mut dim_strides = [0; C];
+        for i in 0..C {
+            d[i] = dims[i].try_into().ok().unwrap();
+            dim_strides[i] = current_stride;
+            current_stride *= d[i];
+            assert_ne!(d[i], 0);
+        }
+
+        Self {
+            data: iter::repeat(default).take(d.iter().product()).collect(),
+            dims: d,
+            dim_strides,
         }
     }
+}
 
-    fn unindex(&self, mut i: usize) -> Option<Vector<N, usize>> {
+impl<const N: usize, T, I: Copy> LinearIndex<Vector<N, I>> for ArrayNd<N, T>
+where
+    Vector<N, I>: TryInto<Vector<N, usize>>,
+    Vector<N, usize>: TryInto<Vector<N, I>>,
+{
+    fn index(&self, i: Vector<N, I>) -> Option<usize> {
+        if self.is_in_bounds(i) {
+            let i: Result<Vector<N, usize>, _> = i.try_into();
+            if let Ok(i) = i {
+                let mut result = 0;
+                for j in (0..N).rev() {
+                    result *= self.dims[j];
+                    result += i.values[j];
+                }
+                return Some(result);
+            }
+        }
+        None
+    }
+
+    fn unindex(&self, mut i: usize) -> Option<Vector<N, I>> {
         let mut result = Vector::new([0; N]);
         for j in 0..N {
             result.values[j] = i % self.dims[j];
             i /= self.dims[j];
         }
-        Some(result)
+
+        result.try_into().ok()
     }
 
-    fn is_in_bounds(&self, i: Vector<N, usize>) -> bool {
-        i.values.iter().zip(self.dims).all(|(&a, b)| a < b)
-    }
-}
-impl<const N: usize, T> LinearIndex<Vector<N, i32>> for ArrayNd<N, T> {
-    fn index(&self, i: Vector<N, i32>) -> Option<usize> {
-        if self.is_in_bounds(i) {
-            let mut result = 0;
-            for j in (0..N).rev() {
-                result *= self.dims[j];
-                result += i.values[j] as usize;
-            }
-            Some(result)
+    fn is_in_bounds(&self, i: Vector<N, I>) -> bool {
+        let i: Result<Vector<N, usize>, _> = i.try_into();
+        if let Ok(i) = i {
+            i.values.iter().zip(self.dims).all(|(&a, b)| a < b)
         } else {
-            None
+            false
         }
-    }
-
-    fn unindex(&self, mut i: usize) -> Option<Vector<N, i32>> {
-        let mut result = Vector::new([0i32; N]);
-        for j in 0..N {
-            result.values[j] = (i % self.dims[j]).try_into().unwrap();
-            i /= self.dims[j];
-        }
-        Some(result)
-    }
-
-    fn is_in_bounds(&self, i: Vector<N, i32>) -> bool {
-        i.values
-            .iter()
-            .zip(self.dims)
-            .all(|(&a, b)| a >= 0 && (a as usize) < b)
     }
 }
+
+// impl<const N: usize, T> LinearIndex<Vector<N, i32>> for ArrayNd<N, T> {
+//     fn index(&self, i: Vector<N, i32>) -> Option<usize> {
+//         if self.is_in_bounds(i) {
+//             let mut result = 0;
+//             for j in (0..N).rev() {
+//                 result *= self.dims[j];
+//                 result += i.values[j] as usize;
+//             }
+//             Some(result)
+//         } else {
+//             None
+//         }
+//     }
+//
+//     fn unindex(&self, mut i: usize) -> Option<Vector<N, i32>> {
+//         let mut result = Vector::new([0i32; N]);
+//         for j in 0..N {
+//             result.values[j] = (i % self.dims[j]).try_into().unwrap();
+//             i /= self.dims[j];
+//         }
+//         Some(result)
+//     }
+//
+//     fn is_in_bounds(&self, i: Vector<N, i32>) -> bool {
+//         i.values
+//             .iter()
+//             .zip(self.dims)
+//             .all(|(&a, b)| a >= 0 && (a as usize) < b)
+//     }
+// }
 
 impl<const N: usize, T: Copy + PartialEq> ArrayNd<N, T> {
     pub fn replace_all(&mut self, from: &T, to: &T) {
@@ -85,6 +120,34 @@ impl<const N: usize, T: Copy + PartialEq> ArrayNd<N, T> {
 }
 
 impl<const N: usize, T> ArrayNd<N, T> {
+    pub fn get_linear(&self, index: usize) -> &T {
+        &self.data[index]
+    }
+    pub fn get_mut_linear(&mut self, index: usize) -> &mut T {
+        &mut self.data[index]
+    }
+    pub fn set_linear(&mut self, index: usize, v: T) {
+        *self.get_mut_linear(index) = v;
+    }
+
+    pub fn get<I>(&self, p: I) -> Option<&T>
+    where
+        Self: LinearIndex<I>,
+    {
+        match self.index(p) {
+            Some(index) => Some(self.get_linear(index)),
+            None => None,
+        }
+    }
+    pub fn get_mut<I>(&mut self, p: I) -> Option<&mut T>
+    where
+        Self: LinearIndex<I>,
+    {
+        match self.index(p) {
+            Some(index) => Some(self.get_mut_linear(index)),
+            None => None,
+        }
+    }
     pub fn set<I>(&mut self, p: I, v: T) -> bool
     where
         Self: LinearIndex<I>,
@@ -95,26 +158,6 @@ impl<const N: usize, T> ArrayNd<N, T> {
                 true
             }
             None => false,
-        }
-    }
-
-    pub fn get_mut<I>(&mut self, p: I) -> Option<&mut T>
-    where
-        Self: LinearIndex<I>,
-    {
-        match self.index(p) {
-            Some(index) => Some(&mut self.data[index]),
-            None => None,
-        }
-    }
-
-    pub fn get<I>(&self, p: I) -> Option<&T>
-    where
-        Self: LinearIndex<I>,
-    {
-        match self.index(p) {
-            Some(index) => Some(&self.data[index]),
-            None => None,
         }
     }
 
@@ -137,6 +180,7 @@ impl<const N: usize, T> ArrayNd<N, T> {
         ArrayNd::<N, U> {
             data,
             dims: self.dims,
+            dim_strides: self.dim_strides,
         }
     }
 }
@@ -166,8 +210,72 @@ impl<const N: usize, T: Copy> ArrayNd<N, T> {
     }
 }
 
-// NOTE(lubo): Array2d
+impl<const N: usize, T: Copy> ArrayNd<N, T> {
+    pub fn set_matching_dims(&mut self, mut matching: [Option<usize>; N], v: T) {
+        let mut index = 0;
+        for i in (0..N).rev() {
+            match matching[i] {
+                Some(value) => index += value * self.dim_strides[i],
+                None => {
+                    for a in 0..self.dims[i] {
+                        matching[i] = Some(a);
+                        self.set_matching_dims(matching, v);
+                    }
+                    return;
+                }
+            }
+        }
+        self.set_linear(index, v)
+    }
+}
+
+impl<const C: usize, T> IterateNeighboursContext for ArrayNd<C, T> {}
+
+impl<const C: usize, T: IterateNeighbours<()> + Copy, U> IterateNeighbours<ArrayNd<C, U>> for T
+where
+    ArrayNd<C, U>: LinearIndex<T>,
+{
+    fn neighbours(&self, _context: &ArrayNd<C, U>) -> Vec<Self> {
+        self.neighbours(&())
+            .into_iter()
+            .filter(|&x| _context.is_in_bounds(x))
+            .collect()
+    }
+}
+
+impl<const C: usize, T: Display> Display for ArrayNd<C, T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let total_size = self.data.len(); // 0..self.dims.iter().product()
+        if C > 1 {
+            let mut index = 0;
+            while index < total_size {
+                if C > 2 {
+                    let slice: Vector<C, usize> = self.unindex(index).unwrap();
+                    writeln!(f, "Slice = {}", slice)?;
+                }
+
+                for _y in 0..self.dims[1] {
+                    for _x in 0..self.dims[0] {
+                        write!(f, "{}", self.get_linear(index))?;
+                        index += 1;
+                    }
+                    writeln!(f)?;
+                }
+            }
+        } else {
+            for x in 0..total_size {
+                write!(f, "{}", self.get_linear(x))?;
+            }
+        }
+
+        write!(f, "")
+    }
+}
+
+// NOTE(lubo): Specific lower dimensional arrays
+
 pub type Array2d<T> = ArrayNd<2, T>;
+pub type Array3d<T> = ArrayNd<3, T>;
 impl<T> Array2d<T> {
     pub fn width(&self) -> usize {
         self.dims[0]
@@ -176,17 +284,15 @@ impl<T> Array2d<T> {
         self.dims[1]
     }
 }
-
-impl<T: Display> Display for Array2d<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for y in (0..self.height()).rev() {
-            for x in 0..self.width() {
-                write!(f, "{}", self.get(V2::from_xy(x, y)).unwrap())?;
-            }
-            writeln!(f)?;
-        }
-
-        write!(f, "")
+impl<T> Array3d<T> {
+    pub fn width(&self) -> usize {
+        self.dims[0]
+    }
+    pub fn height(&self) -> usize {
+        self.dims[1]
+    }
+    pub fn depth(&self) -> usize {
+        self.dims[2]
     }
 }
 
@@ -201,15 +307,17 @@ impl Array2d<char> {
         Self {
             data,
             dims: [width, height],
+            dim_strides: [1, width],
         }
     }
 }
 
 impl<T: Copy> Array2d<T> {
-    pub fn new(width: usize, height: usize, default: T) -> Self {
+    pub fn with_dimensions(width: usize, height: usize, default: T) -> Self {
         Self {
             data: iter::repeat(default).take(width * height).collect(),
             dims: [width, height],
+            dim_strides: [1, width],
         }
     }
 
@@ -223,34 +331,12 @@ impl<T: Copy> Array2d<T> {
     }
 }
 
-impl<T> IterateNeighboursContext for Array2d<T> {}
-
-impl<T: Movement4Directions + Copy, U> IterateNeighbours<Array2d<U>> for T
-where
-    Array2d<U>: LinearIndex<T>,
-{
-    fn neighbours(&self, _context: &Array2d<U>) -> Vec<Self> {
-        let mut results = vec![];
-        if let Some(a) = self.step_right() {
-            if _context.is_in_bounds(a) {
-                results.push(a);
-            }
+impl<T: Copy> Array3d<T> {
+    pub fn with_dimensions(width: usize, height: usize, depth: usize, default: T) -> Self {
+        Self {
+            data: iter::repeat(default).take(width * height * depth).collect(),
+            dims: [width, height, depth],
+            dim_strides: [1, width, width * height],
         }
-        if let Some(a) = self.step_up() {
-            if _context.is_in_bounds(a) {
-                results.push(a);
-            }
-        }
-        if let Some(a) = self.step_left() {
-            if _context.is_in_bounds(a) {
-                results.push(a);
-            }
-        }
-        if let Some(a) = self.step_down() {
-            if _context.is_in_bounds(a) {
-                results.push(a);
-            }
-        }
-        results
     }
 }

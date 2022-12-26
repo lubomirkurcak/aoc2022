@@ -51,7 +51,7 @@ impl<const C: usize> Problem for Day17<C> {
 
         let mut wind = wind.iter().cycle();
 
-        let mut map = Array2d::new(7, 100, '.');
+        let mut map = Array2d::with_dimensions(7, 100, '.');
 
         let mut progress = Progress::new(C);
         let mut first_free_row_absolute = 0u64;
@@ -101,7 +101,9 @@ impl<const C: usize> Problem for Day17<C> {
                                     // println!("{}", x);
                                     ExploreSignals::Explore
                                 },
-                                |x, map| x.y() <= first_free_row && map.get(*x).unwrap() == &'.',
+                                |_p, x, map| {
+                                    x.y() <= first_free_row && map.get(*x).unwrap() == &'.'
+                                },
                             );
                             // NOTE(lubo): Exploration returns the map
                             map = exp.context;

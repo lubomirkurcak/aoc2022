@@ -91,7 +91,7 @@ impl PointKeyValue for Point2 {
         )
     }
 
-    fn compare_values(a: &Self::V, b: &Self::V) -> Option<Ordering> {
+    fn compare_values(_k: &Self::K, a: &Self::V, b: &Self::V) -> Option<Ordering> {
         if a.0 <= b.0 && a.1 >= b.1 && a.2 >= b.2 {
             return Some(Ordering::Less);
         }
@@ -180,7 +180,7 @@ impl Problem for Day<1602> {
 
                 ExploreSignals::Explore
             },
-            |_p, _rooms| true,
+            |_p, _n, _rooms| true,
         );
 
         writeln!(writer, "{}", max_pressure_released).unwrap();

@@ -185,6 +185,52 @@ where
     }
 }
 
+macro_rules! vector_from {
+    ($t:ty; $($u:ty),*) => {$(
+        impl<const C: usize> From<Vector<C, $u>> for Vector<C, $t> {
+            fn from(value: Vector<C, $u>) -> Self {
+                let mut values: [$t; C] = [0 as $t; C];
+
+                for x in 0..C {
+                    values[x] = value.values[x].into();
+                }
+
+                Self::new(values)
+            }
+        })*
+    };
+}
+macro_rules! vector_try_from {
+    ($t:ty; $($u:ty),*) => {$(
+        impl<const C: usize> TryFrom<Vector<C, $u>> for Vector<C, $t> {
+            type Error = <$t as std::convert::TryFrom<$u>>::Error;
+
+            fn try_from(value: Vector<C, $u>) -> Result<Self, Self::Error> {
+                let mut values: [$t; C] = [0 as $t; C];
+
+                for x in 0..C {
+                    values[x] = value.values[x].try_into()?;
+                }
+
+                Ok(Self::new(values))
+            }
+        })*
+    };
+}
+
+vector_from!(i128; i64, i32, i16, i8);
+vector_from!(i64; i32, i16, i8);
+vector_from!(i32; i16, i8);
+vector_from!(i16; i8);
+vector_from!(u128; u64, u32, u16, u8);
+vector_from!(u64; u32, u16, u8);
+vector_from!(u32; u16, u8);
+vector_from!(u16; u8);
+vector_from!(f64; f32);
+
+vector_try_from!(usize; i128, i64, i32, i16, i8, u128, u64, u32, u16, u8, isize);
+vector_try_from!(i32; i128, i64, u128, u64, u32, u16, u8, isize, usize);
+
 macro_rules! movement4directions {
     ($($t:ty),*) => {
         $(
