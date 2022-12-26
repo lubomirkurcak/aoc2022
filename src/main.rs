@@ -18,6 +18,7 @@ mod day17_pretty;
 mod day18;
 mod day19;
 mod day2;
+mod day20;
 mod day3;
 mod day4;
 mod day5;
@@ -35,7 +36,8 @@ fn main() {
     //Day19::<24, false>::solve_file("in19_small.txt", &mut writer);
     // Day19::<32, true>::solve_file("in19_small.txt", &mut writer);
     //Day19::<24, false>::solve_file("in19.txt", &mut writer);
-    Day19::<32, true>::solve_file("in19.txt", &mut writer);
+    //Day19::<32, true>::solve_file("in19.txt", &mut writer);
+    Day::<20>::solve_file("in20.txt", &mut writer);
     println!("Time: {:?}", t0.elapsed());
 }
 
