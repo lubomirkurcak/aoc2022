@@ -1,5 +1,6 @@
 use std::{collections::HashMap, io::prelude::*, io::BufReader};
 
+use crate::lkc::expr::Expression;
 use crate::lkc::math::*;
 use crate::Problem;
 
@@ -8,62 +9,13 @@ type WorryLevel = i64;
 
 struct Monkey {
     items: Vec<WorryLevel>,
-    operation: Box<dyn Fn(WorryLevel) -> WorryLevel>,
+    #[allow(clippy::type_complexity)]
+    operation: Box<dyn Fn(&HashMap<String, Expression<WorryLevel>>) -> WorryLevel>,
     test: Box<dyn Fn(WorryLevel) -> bool>,
     target_if_true: MonkeyId,
     target_if_false: MonkeyId,
     items_inspected: usize,
     division_test_value: WorryLevel,
-}
-
-enum Expression {
-    Add(Box<Expression>, Box<Expression>),
-    Mul(Box<Expression>, Box<Expression>),
-    Old,
-    Const(WorryLevel),
-}
-
-impl Expression {
-    fn eval(&self, old: WorryLevel) -> WorryLevel {
-        match self {
-            Expression::Add(a, b) => a.eval(old) + b.eval(old),
-            Expression::Mul(a, b) => a.eval(old) * b.eval(old),
-            Expression::Old => old,
-            Expression::Const(val) => *val,
-        }
-    }
-
-    fn from_str(s: &str) -> Self {
-        let s = s.trim();
-
-        if let Some(i) = s.find('+') {
-            let split = s.split_at(i);
-            return Self::Add(
-                Box::new(Self::from_str(split.0)),
-                Box::new(Self::from_str(&split.1[1..])),
-            );
-        }
-
-        if let Some(i) = s.find('*') {
-            let split = s.split_at(i);
-            return Self::Mul(
-                Box::new(Self::from_str(split.0)),
-                Box::new(Self::from_str(&split.1[1..])),
-            );
-        }
-
-        if s == "old" {
-            return Self::Old;
-        }
-
-        if let Ok(val) = s.parse() {
-            return Self::Const(val);
-        }
-
-        println!("Unknown expression: '{}'", s);
-
-        panic!();
-    }
 }
 
 impl Monkey {
@@ -88,7 +40,7 @@ impl Monkey {
             let operation = line.split("Operation:").collect::<Vec<&str>>()[1];
             let operation = operation.trim().split('=').collect::<Vec<&str>>()[1];
             let expression = Expression::from_str(operation);
-            let operation = Box::new(move |old| expression.eval(old));
+            let operation = Box::new(move |vals: &HashMap<_, _>| expression.eval(vals).unwrap());
 
             let line = lines.next().unwrap();
             let divisible_by: WorryLevel = line.split("Test: divisible by").collect::<Vec<&str>>()
@@ -167,7 +119,10 @@ impl<const D: WorryLevel, const R: usize> Problem for Day11<D, R> {
                 let (true_items, false_items): (Vec<_>, Vec<_>) = monkey
                     .items
                     .drain(..)
-                    .map(|x| ((monkey.operation)(x) / D) % modulo)
+                    .map(|x| {
+                        let vals = HashMap::from([("old".into(), Expression::Const(x))]);
+                        ((monkey.operation)(&vals) / D) % modulo
+                    })
                     .partition(|x| (monkey.test)(*x));
 
                 let true_target = monkeys.get_mut(&id_if_true).unwrap();

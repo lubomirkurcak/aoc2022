@@ -1,6 +1,6 @@
 use std::{fs::File, io::BufReader, path::Path};
 
-use crate::{day19::Day19, day20::Day20};
+use crate::day19::Day19;
 
 mod day1;
 mod day10;
@@ -19,6 +19,7 @@ mod day18;
 mod day19;
 mod day2;
 mod day20;
+mod day21;
 mod day3;
 mod day4;
 mod day5;
@@ -37,8 +38,7 @@ fn main() {
     // Day19::<32, true>::solve_file("in19_small.txt", &mut writer);
     //Day19::<24, false>::solve_file("in19.txt", &mut writer);
     //Day19::<32, true>::solve_file("in19.txt", &mut writer);
-    // Day20::<1, 1>::solve_file("in20.txt", &mut writer);
-    Day20::<10, 811589153>::solve_file("in20.txt", &mut writer);
+    Day::<2102>::solve_file("in21.txt", &mut writer);
     println!("Time: {:?}", t0.elapsed());
 }
 
@@ -452,5 +452,23 @@ mod tests {
         let output_raw = writer.into_inner();
         let output = std::str::from_utf8(&output_raw).unwrap().trim();
         assert_eq!(output, "6704537992933");
+    }
+
+    #[test]
+    fn day21_eval() {
+        let mut writer = std::io::Cursor::new(vec![]);
+        Day::<2101>::solve_file("in21.txt", &mut writer);
+        let output_raw = writer.into_inner();
+        let output = std::str::from_utf8(&output_raw).unwrap().trim();
+        assert_eq!(output, "83056452926300");
+    }
+
+    #[test]
+    fn day21_force_result() {
+        let mut writer = std::io::Cursor::new(vec![]);
+        Day::<2102>::solve_file("in21.txt", &mut writer);
+        let output_raw = writer.into_inner();
+        let output = std::str::from_utf8(&output_raw).unwrap().trim();
+        assert_eq!(output, "3469704905529");
     }
 }

@@ -13,3 +13,4 @@ mod sketch;
 pub mod transformations;
 pub mod vector;
 pub mod bijection;
+pub mod expr;
