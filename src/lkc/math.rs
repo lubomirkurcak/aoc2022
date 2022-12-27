@@ -149,7 +149,12 @@ impl<T: Copy + Ord> Interval for std::ops::Range<T> {
 }
 
 pub fn triangle_numbers(n: i32) -> i32 {
-    n * (n + 1) / 2
+    // n * (n + 1) / 2
+    if n & 0b1 > 0 {
+        n * ((n + 1) / 2)
+    } else {
+        (n / 2) * (n + 1)
+    }
 }
 
 #[cfg(test)]

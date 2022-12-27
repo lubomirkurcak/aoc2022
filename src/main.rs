@@ -1,6 +1,6 @@
 use std::{fs::File, io::BufReader, path::Path};
 
-use crate::day19::Day19;
+use crate::{day19::Day19, day20::Day20};
 
 mod day1;
 mod day10;
@@ -37,7 +37,8 @@ fn main() {
     // Day19::<32, true>::solve_file("in19_small.txt", &mut writer);
     //Day19::<24, false>::solve_file("in19.txt", &mut writer);
     //Day19::<32, true>::solve_file("in19.txt", &mut writer);
-    Day::<20>::solve_file("in20.txt", &mut writer);
+    // Day20::<1, 1>::solve_file("in20.txt", &mut writer);
+    Day20::<10, 811589153>::solve_file("in20.txt", &mut writer);
     println!("Time: {:?}", t0.elapsed());
 }
 
@@ -74,6 +75,7 @@ mod tests {
         day15::{Day15, DefinitelyNoBeaconsAtLine, FindTheLoneOutOfRangeTile},
         day17_optimized::Day17Optimized,
         day17_pretty::Day17,
+        day20::Day20,
         day3::{Day3CommonItemInCompartments, Day3CommonItemInGroups},
         day4::{Day4, OneFullyInsideAnotherOptimized, OneFullyInsideAnotherSimple, Overlap},
         day5::{CrateMover9000, CrateMover9001, Day5},
@@ -432,5 +434,23 @@ mod tests {
         let output_raw = writer.into_inner();
         let output = std::str::from_utf8(&output_raw).unwrap().trim();
         assert_eq!(output, "2524");
+    }
+
+    #[test]
+    fn day20_shuffle() {
+        let mut writer = std::io::Cursor::new(vec![]);
+        Day20::<1, 1>::solve_file("in20.txt", &mut writer);
+        let output_raw = writer.into_inner();
+        let output = std::str::from_utf8(&output_raw).unwrap().trim();
+        assert_eq!(output, "4066");
+    }
+
+    #[test]
+    fn day20_decryption_key() {
+        let mut writer = std::io::Cursor::new(vec![]);
+        Day20::<10, 811589153>::solve_file("in20.txt", &mut writer);
+        let output_raw = writer.into_inner();
+        let output = std::str::from_utf8(&output_raw).unwrap().trim();
+        assert_eq!(output, "6704537992933");
     }
 }

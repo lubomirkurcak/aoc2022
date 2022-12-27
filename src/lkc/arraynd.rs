@@ -210,8 +210,12 @@ impl<const N: usize, T: Copy> ArrayNd<N, T> {
     }
 }
 
+// NOTE(lubo): Choose which slice (index) to paint in each dimension, or pass None to paint all tiles in that dimension.
+// Example:
+//   Draw a plane at Y = 3 in a 3D array
+//   a (: Array3D) .draw_block(&[None, Some(3), None])
 impl<const N: usize, T: Copy> ArrayNd<N, T> {
-    pub fn set_matching_dims(&mut self, mut matching: [Option<usize>; N], v: T) {
+    pub fn draw_block(&mut self, mut matching: [Option<usize>; N], v: T) {
         let mut index = 0;
         for i in (0..N).rev() {
             match matching[i] {
@@ -219,7 +223,7 @@ impl<const N: usize, T: Copy> ArrayNd<N, T> {
                 None => {
                     for a in 0..self.dims[i] {
                         matching[i] = Some(a);
-                        self.set_matching_dims(matching, v);
+                        self.draw_block(matching, v);
                     }
                     return;
                 }
