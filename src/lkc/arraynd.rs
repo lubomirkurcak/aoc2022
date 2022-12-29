@@ -8,7 +8,7 @@ use super::{
     geometric_traits::{IterateNeighbours, IterateNeighboursContext},
     line_iterator::LineIterator,
     linear_index::LinearIndex,
-    vector::Vector,
+    vector::{V2i32, V2usize, Vector},
 };
 
 #[derive(Clone)]
@@ -38,76 +38,72 @@ impl<const C: usize, T: Copy> ArrayNd<C, T> {
     }
 }
 
-impl<const N: usize, T, I: Copy> LinearIndex<Vector<N, I>> for ArrayNd<N, T>
-where
-    Vector<N, I>: TryInto<Vector<N, usize>>,
-    Vector<N, usize>: TryInto<Vector<N, I>>,
-{
-    fn index(&self, i: Vector<N, I>) -> Option<usize> {
-        if self.is_in_bounds(i) {
-            let i: Result<Vector<N, usize>, _> = i.try_into();
-            if let Ok(i) = i {
-                let mut result = 0;
-                for j in (0..N).rev() {
-                    result *= self.dims[j];
-                    result += i.values[j];
-                }
-                return Some(result);
-            }
-        }
-        None
-    }
-
-    fn unindex(&self, mut i: usize) -> Option<Vector<N, I>> {
-        let mut result = Vector::new([0; N]);
-        for j in 0..N {
-            result.values[j] = i % self.dims[j];
-            i /= self.dims[j];
-        }
-
-        result.try_into().ok()
-    }
-
-    fn is_in_bounds(&self, i: Vector<N, I>) -> bool {
-        let i: Result<Vector<N, usize>, _> = i.try_into();
-        if let Ok(i) = i {
-            i.values.iter().zip(self.dims).all(|(&a, b)| a < b)
-        } else {
-            false
-        }
-    }
-}
-
-// impl<const N: usize, T> LinearIndex<Vector<N, i32>> for ArrayNd<N, T> {
-//     fn index(&self, i: Vector<N, i32>) -> Option<usize> {
+// impl<const N: usize, T, I: Copy> LinearIndex<Vector<N, I>> for ArrayNd<N, T>
+// where
+//     Vector<N, I>: TryInto<Vector<N, usize>>,
+//     Vector<N, usize>: TryInto<Vector<N, I>>,
+// {
+//     fn index(&self, i: Vector<N, I>) -> Option<usize> {
 //         if self.is_in_bounds(i) {
-//             let mut result = 0;
-//             for j in (0..N).rev() {
-//                 result *= self.dims[j];
-//                 result += i.values[j] as usize;
+//             let i: Result<Vector<N, usize>, _> = i.try_into();
+//             if let Ok(i) = i {
+//                 let mut result = 0;
+//                 for j in (0..N).rev() {
+//                     result *= self.dims[j];
+//                     result += i.values[j];
+//                 }
+//                 return Some(result);
 //             }
-//             Some(result)
-//         } else {
-//             None
 //         }
+//         None
 //     }
 //
-//     fn unindex(&self, mut i: usize) -> Option<Vector<N, i32>> {
-//         let mut result = Vector::new([0i32; N]);
+//     fn unindex(&self, mut i: usize) -> Option<Vector<N, I>> {
+//         let mut result = Vector::new([0; N]);
 //         for j in 0..N {
-//             result.values[j] = (i % self.dims[j]).try_into().unwrap();
+//             result.values[j] = i % self.dims[j];
 //             i /= self.dims[j];
 //         }
-//         Some(result)
+//
+//         result.try_into().ok()
 //     }
 //
-//     fn is_in_bounds(&self, i: Vector<N, i32>) -> bool {
-//         i.values
-//             .iter()
-//             .zip(self.dims)
-//             .all(|(&a, b)| a >= 0 && (a as usize) < b)
+//     fn is_in_bounds(&self, i: Vector<N, I>) -> bool {
+//         let i: Result<Vector<N, usize>, _> = i.try_into();
+//         if let Ok(i) = i {
+//             i.values.iter().zip(self.dims).all(|(&a, b)| a < b)
+//         } else {
+//             false
+//         }
 //     }
 // }
+
+macro_rules! array_vector_linear_index {
+    ($($t:ty),*) => {
+        $(
+impl<const N: usize, T> LinearIndex<Vector<N, $t>> for ArrayNd<N, T> {
+    fn index_unchecked(&self, i: Vector<N, $t>) -> Option<usize> {
+        Vector::new(self.dims).index_unchecked(i.try_into().unwrap())
+    }
+    fn unindex(&self, mut i: usize) -> Option<Vector<N, $t>> {
+        if let Some(a) = Vector::new(self.dims).unindex(i) {
+            match a.try_into() {
+                Ok(a) => Some(a),
+                Err(_) => None,
+            }
+        } else {
+            None
+        }
+    }
+    fn is_in_bounds(&self, i: &Vector<N, $t>) -> bool {
+        Vector::new(self.dims).is_in_bounds(&((*i).try_into().unwrap()))
+    }
+}
+        )*
+    };
+}
+
+array_vector_linear_index!(i32);
 
 impl<const N: usize, T: Copy + PartialEq> ArrayNd<N, T> {
     pub fn replace_all(&mut self, from: &T, to: &T) {
@@ -161,15 +157,43 @@ impl<const N: usize, T> ArrayNd<N, T> {
         }
     }
 
-    pub fn find(&self, item: &T) -> Option<Vector<N, usize>>
+    fn find_internal<I>(&self, item: &T) -> Option<I>
     where
         T: PartialEq,
+        Self: LinearIndex<I>,
     {
         match self.data.iter().position(|x| x == item) {
             Some(index) => self.unindex(index),
             None => None,
         }
     }
+
+    pub fn find(&self, item: &T) -> Option<Vector<N, i32>>
+    where
+        T: PartialEq,
+    {
+        self.find_internal(item)
+    }
+
+    pub fn find_all<I>(&self, item: &T) -> Vec<I>
+    where
+        T: PartialEq,
+        Self: LinearIndex<I>,
+    {
+        self.data
+            .iter()
+            .enumerate()
+            .filter(|(_, x)| x == &item)
+            .map(|(i, _)| self.unindex(i).unwrap())
+            .collect()
+    }
+
+    // pub fn find_all(&self, item: &T) -> Vec<Vector<N, i32>>
+    // where
+    //     T: PartialEq,
+    // {
+    //     self.find_all_internal(item)
+    // }
 
     pub fn map<F, U>(&self, f: F) -> ArrayNd<N, U>
     where
@@ -242,7 +266,7 @@ where
     fn neighbours(&self, _context: &ArrayNd<C, U>) -> Vec<Self> {
         self.neighbours(&())
             .into_iter()
-            .filter(|&x| _context.is_in_bounds(x))
+            .filter(|x| _context.is_in_bounds(x))
             .collect()
     }
 }
@@ -254,8 +278,7 @@ impl<const C: usize, T: Display> Display for ArrayNd<C, T> {
             let mut index = 0;
             while index < total_size {
                 if C > 2 {
-                    let slice: Vector<C, usize> = self.unindex(index).unwrap();
-                    writeln!(f, "Slice = {}", slice)?;
+                    writeln!(f, "Slice = {}", self.unindex(index).unwrap())?;
                 }
 
                 for _y in 0..self.dims[1] {

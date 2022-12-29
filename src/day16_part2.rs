@@ -4,7 +4,7 @@ use crate::{
     day16::{PointTrait, Rooms},
     lkc::{
         explore::{Exploration, ExploreSignals, PointKeyValue},
-        geometric_traits::IterateNeighbours,
+        geometric_traits::IterateNeighbours, sketch::StackBag,
     },
     Day, Problem,
 };
@@ -158,12 +158,12 @@ impl Problem for Day<1602> {
         W: std::io::Write,
     {
         let rooms = Rooms::from_buffer(reader);
-        let mut exp = Exploration::new(rooms);
+        let mut exp = Exploration::new(rooms, ());
         let mut max_pressure_released = 0;
 
-        exp.explore_avoid_worse(
+        exp.explore_avoid_worse::<_, _, StackBag<_>>(
             Point2::initial(0, &exp.context),
-            |p, rooms| {
+            |p, rooms, _| {
                 let state_potential = p.state_potential_overestimate(rooms);
 
                 if state_potential == 0 {
@@ -180,7 +180,7 @@ impl Problem for Day<1602> {
 
                 ExploreSignals::Explore
             },
-            |_p, _n, _rooms| true,
+            |_p, _n, _rooms, _| true,
         );
 
         writeln!(writer, "{}", max_pressure_released).unwrap();

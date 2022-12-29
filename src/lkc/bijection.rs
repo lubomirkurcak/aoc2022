@@ -1,4 +1,4 @@
-use super::modular::ModularArithmetic;
+use super::modular::ModularAdd;
 
 #[derive(Debug, Clone)]
 pub struct Bijection {

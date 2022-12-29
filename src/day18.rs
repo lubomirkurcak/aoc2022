@@ -6,7 +6,7 @@ use crate::{
         arraynd::Array3d,
         explore::{Exploration, ExploreSignals},
         geometric_traits::CoverObject,
-        vector::{Scalar, V3},
+        vector::{Scalar, V3}, sketch::StackBag,
     },
     Day, Problem,
 };
@@ -90,14 +90,14 @@ impl Problem for Day<1802> {
         let start = V3::from_xyz(0, 0, 0);
 
         let mut result = 0;
-        let mut exp = Exploration::new(map);
-        exp.explore_avoid_identical(
+        let mut exp = Exploration::new(map, ());
+        exp.explore_avoid_identical::<_, _, StackBag<_>>(
             start,
-            |a, map| {
+            |a, map, _| {
                 debug_assert_ne!(map.get(*a).unwrap(), &lava);
                 ExploreSignals::Explore
             },
-            |_p, a, map| {
+            |_p, a, map, _| {
                 let v = map.get(*a).unwrap();
                 if v == &lava {
                     result += 1;

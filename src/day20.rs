@@ -1,12 +1,6 @@
 use std::{io::prelude::*, io::BufReader};
 
-use crate::{
-    lkc::{
-        bijection::Bijection,
-        modular::{Modular, ModularArithmetic},
-    },
-    Problem,
-};
+use crate::{lkc::{bijection::Bijection, modular::{ModularDecompose, ModularSubAssign, ModularAddAssign}}, Problem};
 
 #[derive(Debug, Clone)]
 struct TangleArray<T> {

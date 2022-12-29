@@ -8,6 +8,7 @@ use super::{
     geometric_traits::{
         EuclideanDistanceSquared, IterateNeighbours, ManhattanDistance, Movement4Directions,
     },
+    linear_index::LinearIndex,
     math::AbsoluteValue,
 };
 
@@ -47,6 +48,21 @@ where
     }
 }
 
+impl<const C: usize> Vector<C, f32> {
+    pub fn magn(&self) -> f32 {
+        self.inner(*self).sqrt()
+    }
+    pub fn normalized(&self) -> Self {
+        let magn = self.magn();
+
+        if magn > f32::EPSILON {
+            *self * (1.0 / magn)
+        } else {
+            *self * 0.0
+        }
+    }
+}
+
 impl<const C: usize, T: Add<Output = T> + Copy> Add for Vector<C, T> {
     type Output = Self;
 
@@ -55,7 +71,7 @@ impl<const C: usize, T: Add<Output = T> + Copy> Add for Vector<C, T> {
 
         #[allow(clippy::needless_range_loop)]
         for x in 0..C {
-            values[x] = values[x] + rhs.values[x];
+            values[x] = self.values[x] + rhs.values[x];
         }
 
         Self::Output::new(values)
@@ -76,7 +92,7 @@ impl<const C: usize, T: Sub<Output = T> + Copy> Sub for Vector<C, T> {
 
         #[allow(clippy::needless_range_loop)]
         for x in 0..C {
-            values[x] = values[x] - rhs.values[x];
+            values[x] = self.values[x] - rhs.values[x];
         }
 
         Self::Output::new(values)
@@ -231,6 +247,43 @@ vector_from!(f64; f32);
 vector_try_from!(usize; i128, i64, i32, i16, i8, u128, u64, u32, u16, u8, isize);
 vector_try_from!(i32; i128, i64, u128, u64, u32, u16, u8, isize, usize);
 
+macro_rules! vector_linear_index {
+    ($($t:ty),*) => {
+        $(
+impl<const N: usize> LinearIndex<Self> for Vector<N, $t> {
+    fn index_unchecked(&self, i: Self) -> Option<usize> {
+        let mut result: usize = 0;
+        for j in (0..N).rev() {
+            let a: usize = self.values[j].try_into().unwrap();
+            result *= a;
+            let b: usize = i.values[j].try_into().unwrap();
+            result += b;
+        }
+        Some(result)
+    }
+
+    fn unindex(&self, mut i: usize) -> Option<Self> {
+        let mut result = Vector::new([0; N]);
+        for j in 0..N {
+            result.values[j] = (i % self.values[j] as usize).try_into().unwrap();
+            i /= self.values[j] as usize;
+        }
+        Some(result)
+    }
+
+    fn is_in_bounds(&self, i: &Self) -> bool {
+        i.values
+            .iter()
+            .zip(self.values)
+            .all(|(&a, b)| a >= 0 && a < b)
+    }
+}
+        )*
+    };
+}
+
+vector_linear_index!(usize, isize, i128, i64, i32, i16, i8, u128, u64, u32, u16, u8);
+
 macro_rules! movement4directions {
     ($($t:ty),*) => {
         $(
@@ -264,7 +317,7 @@ pub type V2<T> = Vector<2, T>;
 pub type V3<T> = Vector<3, T>;
 pub type V4<T> = Vector<4, T>;
 
-// pub type V2i32 = V2<i32>;
+pub type V2i32 = V2<i32>;
 pub type V2usize = V2<usize>;
 // pub type V2f32 = V2<f32>;
 // pub type V3i32 = V3<i32>;

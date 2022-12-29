@@ -3,7 +3,7 @@ use std::{io::prelude::*, io::BufReader, str::FromStr};
 use crate::{
     lkc::{
         explore::{Exploration, ExploreSignals},
-        geometric_traits::{IterateNeighbours, IterateNeighboursContext},
+        geometric_traits::{IterateNeighbours, IterateNeighboursContext}, sketch::StackBag,
     },
     Problem,
 };
@@ -291,14 +291,14 @@ impl<const C: i32, const B: bool> Problem for Day19<C, B> {
         let mut result = i32::from(B);
 
         for blueprint in blueprints {
-            let mut exp = Exploration::new(blueprint);
+            let mut exp = Exploration::new(blueprint, ());
             let mut max_geodes_for_bp = 0;
-            exp.explore(
+            exp.explore::<_, _, StackBag<_>>(
                 Point::<C> {
                     ore_r: 1,
                     ..Default::default()
                 },
-                |p, _bp| {
+                |p, _bp, _| {
                     if p.geode > max_geodes_for_bp {
                         max_geodes_for_bp = p.geode;
                         println!("new best {:?}", p);
@@ -306,7 +306,7 @@ impl<const C: i32, const B: bool> Problem for Day19<C, B> {
 
                     ExploreSignals::Explore
                 },
-                |_p, _n, _bp| true,
+                |_p, _n, _bp, _| true,
             );
             if B {
                 result *= max_geodes_for_bp;

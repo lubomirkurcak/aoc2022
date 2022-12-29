@@ -1,6 +1,9 @@
 use std::{fs::File, io::BufReader, path::Path};
 
-use crate::day19::Day19;
+use crate::{
+    day19::Day19,
+    lkc::{arraynd::Array2d, geometric_algebra::Multivector3, vector::V2},
+};
 
 mod day1;
 mod day10;
@@ -20,6 +23,7 @@ mod day19;
 mod day2;
 mod day20;
 mod day21;
+mod day22;
 mod day3;
 mod day4;
 mod day5;
@@ -34,11 +38,13 @@ fn main() {
     let mut writer = std::io::Cursor::new(vec![]);
     println!("Hey!");
     let t0 = std::time::Instant::now();
+
     //Day19::<24, false>::solve_file("in19_small.txt", &mut writer);
     // Day19::<32, true>::solve_file("in19_small.txt", &mut writer);
     //Day19::<24, false>::solve_file("in19.txt", &mut writer);
     //Day19::<32, true>::solve_file("in19.txt", &mut writer);
-    Day::<2102>::solve_file("in21.txt", &mut writer);
+    Day::<22>::solve_file("in22.txt", &mut writer);
+    //Day::<22>::solve_file("in22_small.txt", &mut writer);
     println!("Time: {:?}", t0.elapsed());
 }
 
@@ -291,13 +297,21 @@ mod tests {
     }
 
     #[test]
-    fn day12() {
+    fn day12_uphill() {
         let mut writer = std::io::Cursor::new(vec![]);
-        Day::<12>::solve_file("in12.txt", &mut writer);
+        Day::<1201>::solve_file("in12.txt", &mut writer);
         let output_raw = writer.into_inner();
         let output = std::str::from_utf8(&output_raw).unwrap().trim();
-        assert!(output.contains("412"));
-        assert!(output.contains("402"));
+        assert_eq!(output, "412");
+    }
+
+    #[test]
+    fn day12_downhill() {
+        let mut writer = std::io::Cursor::new(vec![]);
+        Day::<1202>::solve_file("in12.txt", &mut writer);
+        let output_raw = writer.into_inner();
+        let output = std::str::from_utf8(&output_raw).unwrap().trim();
+        assert_eq!(output, "402");
     }
 
     #[test]

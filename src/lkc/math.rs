@@ -1,3 +1,7 @@
+pub trait Zero {
+    fn zero() -> Self;
+}
+
 pub trait Gcd {
     fn gcd(a: Self, b: Self) -> Self;
     fn lcm(a: Self, b: Self) -> Self;

@@ -7,7 +7,7 @@ use crate::{
         cli::Progress,
         explore::{Exploration, ExploreSignals},
         line::LineV2i32,
-        vector::V2,
+        vector::V2, sketch::StackBag,
     },
     Problem,
 };
@@ -89,10 +89,10 @@ impl<const C: usize> Problem for Day17<C> {
 
                         if let Some(a) = a {
                             let mut failed = false;
-                            let mut exp = Exploration::new(map);
-                            exp.explore(
+                            let mut exp = Exploration::new(map, ());
+                            exp.explore::<_, _, StackBag<_>>(
                                 a,
-                                |x, map| {
+                                |x, map, _| {
                                     if x.y() >= first_free_row {
                                         failed = true;
                                         return ExploreSignals::ReachedGoal;
@@ -101,7 +101,7 @@ impl<const C: usize> Problem for Day17<C> {
                                     // println!("{}", x);
                                     ExploreSignals::Explore
                                 },
-                                |_p, x, map| {
+                                |_p, x, map, _| {
                                     x.y() <= first_free_row && map.get(*x).unwrap() == &'.'
                                 },
                             );
