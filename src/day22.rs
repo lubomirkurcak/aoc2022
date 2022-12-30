@@ -10,6 +10,7 @@ use crate::{
         arraynd::Array2d,
         explore::{Exploration, ExploreSignals},
         geometric_algebra::Multivector3,
+        line::{Line, LineV2i32},
         linear_index::LinearIndex,
         modular::{Modi32, ModularAdd, ModularAddAssign},
         sketch::StackBag,
@@ -62,10 +63,54 @@ fn parse_instructions(s: &str) -> Vec<Instruction> {
     results
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum FaceEdge {
+    Top,
+    Right,
+    Bottom,
+    Left,
+}
+
+impl FaceEdge {
+    fn indices(&self) -> (usize, usize) {
+        match self {
+            FaceEdge::Top => (0, 1),
+            FaceEdge::Right => (1, 3),
+            FaceEdge::Bottom => (2, 3),
+            FaceEdge::Left => (0, 2),
+        }
+    }
+
+    pub fn iter() -> impl Iterator<Item = Self> {
+        [Self::Top, Self::Right, Self::Bottom, Self::Left].into_iter()
+    }
+}
+
+// NOTE(lubo): Topology of face
+//  0------1------> X-axis (RIGHT)
+//  |      |
+//  |      |
+//  2------3
+//  |
+//  | Y-axis (DOWN)
+//  V
 type Vert = u8;
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy)]
 struct Face([Vert; 4]);
 impl Face {
+    fn get_edge_ordered(&self, edge: FaceEdge) -> [Vert; 2] {
+        let (a, b) = edge.indices();
+        [self.0[a], self.0[b]]
+    }
+    fn get_edge(&self, edge: FaceEdge) -> HashSet<Vert> {
+        self.get_edge_ordered(edge).iter().cloned().collect()
+    }
+    fn is_edge(&self, edge: FaceEdge, vertset: &HashSet<Vert>) -> bool {
+        self.get_edge(edge).eq(vertset)
+    }
+    fn find_edge(&self, vertset: &HashSet<Vert>) -> Option<FaceEdge> {
+        FaceEdge::iter().find(|x| self.is_edge(*x, vertset))
+    }
     fn has_vert(&self, vert: &Vert) -> bool {
         self.0.iter().any(|x| x == vert)
     }
@@ -162,14 +207,17 @@ fn cube_wrap_rule_1(faces: &[Face]) -> HashMap<Vert, Vert> {
     relabels
 }
 
-fn cube_wrap(mut minimap: Array2d<char>) {
+fn solve_cube_minimap(
+    minimap: Array2d<char>,
+) -> Vec<(FaceEdge, FaceEdge, i32, LineV2i32, LineV2i32)> {
     let face_ps = minimap.find_all(&'#');
+    let minimap_dims: V2i32 = V2::new(minimap.dims).try_into().unwrap();
+    let vert_grid_size = minimap_dims + V2::from_xy(1, 1);
 
-    let mut faces = face_ps
+    let original_faces = face_ps
         .into_iter()
         .map(|p| {
             let p = p.try_into().unwrap();
-            let vert_grid_size = V2::new(minimap.dims) + V2::from_xy(1, 1);
             let a = vert_grid_size.index_unchecked(p).unwrap();
             let b = vert_grid_size
                 .index_unchecked(p + V2::from_xy(1, 0))
@@ -190,6 +238,8 @@ fn cube_wrap(mut minimap: Array2d<char>) {
         })
         .collect::<Vec<_>>();
 
+    let mut faces = original_faces.clone();
+
     loop {
         let relabels = cube_wrap_rule_1(&faces[..]);
         if relabels.is_empty() {
@@ -204,31 +254,65 @@ fn cube_wrap(mut minimap: Array2d<char>) {
             })
         });
     }
+
+    let mut edges_to_glue = vec![];
+    for face in 0..6 {
+        'edge: for edge in FaceEdge::iter() {
+            let e = faces[face].get_edge(edge);
+
+            for other in 0..6 {
+                if face != other {
+                    if let Some(a) = faces[other].find_edge(&e) {
+                        // println!("{}'s {:?} shares edge with {}'s {:?}", face, edge, other, a);
+
+                        let rot = (4 + 2 + a as i32 - edge as i32) % 4;
+                        // println!("ROTATION IS {} ({} degrees)", rot, rot * 90);
+
+                        let edge_a = original_faces[face].get_edge_ordered(edge);
+                        let edge_b = original_faces[other].get_edge_ordered(a);
+
+                        let a0 = vert_grid_size.unindex(edge_a[0] as usize).unwrap();
+                        let a1 = vert_grid_size.unindex(edge_a[1] as usize).unwrap();
+                        let mut b0 = vert_grid_size.unindex(edge_b[0] as usize).unwrap();
+                        let mut b1 = vert_grid_size.unindex(edge_b[1] as usize).unwrap();
+
+                        if a0 == b0 && a1 == b1 {
+                        } else {
+                            let relabeled_edge_a = faces[face].get_edge_ordered(edge);
+                            let mut relabeled_edge_b = faces[other].get_edge_ordered(a);
+
+                            if relabeled_edge_a[0] == relabeled_edge_b[0] {
+                                // NOTE(lubo): Already in the right order
+                            } else {
+                                assert_eq!(relabeled_edge_a[0], relabeled_edge_b[1]);
+                                relabeled_edge_b.swap(0, 1);
+                                std::mem::swap(&mut b0, &mut b1);
+                            }
+                            assert_eq!(relabeled_edge_a[0], relabeled_edge_b[0]);
+
+                            edges_to_glue.push((
+                                edge,
+                                a,
+                                rot,
+                                Line::new(a0, a1),
+                                Line::new(b0, b1),
+                            ));
+                            println!("[{}, {}]   <-->   [{}, {}]   (Rot {})", a0, a1, b0, b1, rot);
+                        }
+
+                        continue 'edge;
+                    }
+                }
+            }
+        }
+    }
+
+    edges_to_glue
 }
 
-fn solve_cube_minimap(mut minimap: Array2d<char>) {
-    println!("                 ");
-    println!("      G---------H");
-    println!("     /|        /|");
-    println!("    / |       / |");
-    println!("   C---------D  |");
-    println!("   |  E------|--F");
-    println!("   | /       | / ");
-    println!("   |/        |/  ");
-    println!("   A---------B   ");
-    println!("                 ");
-    println!(" Possible Faces: ");
-    println!(" ABCD            ");
-    println!(" ABEF            ");
-    println!(" ACEG            ");
-    println!(" BDFH            ");
-    println!(" CDGH            ");
-    println!(" EFGH            ");
-    println!("                 ");
-    cube_wrap(minimap);
-}
+pub struct Day22<const B: bool, const C: usize>;
 
-impl Problem for Day<22> {
+impl<const B: bool, const C: usize> Problem for Day22<B, C> {
     fn solve_buffer<T, W>(reader: BufReader<T>, writer: &mut W)
     where
         T: std::io::Read,
@@ -244,17 +328,17 @@ impl Problem for Day<22> {
             a
         });
         assert!(map.clone().all(|x| x.len() == map_width));
-        let map = Array2d {
+        let mut map = Array2d {
             data: map.clone().collect::<Vec<_>>().concat().chars().collect(),
             dims: [map_width, map.clone().count()],
             dim_strides: [1, map_width],
         };
 
-        let mut minimap = Array2d::with_dimensions(map.width() / 50, map.height() / 50, '.');
+        let mut minimap = Array2d::with_dimensions(map.width() / C, map.height() / C, '.');
         for y in 0..minimap.height() {
             for x in 0..minimap.width() {
                 let p = V2::from_xy(x as i32, y as i32);
-                let q = p * 50;
+                let q = p * C.try_into().unwrap();
                 let v = *map.get(q).unwrap();
                 if v != ' ' {
                     minimap.set(p, '#');
@@ -262,8 +346,44 @@ impl Problem for Day<22> {
             }
         }
         println!("{}", minimap);
+        let mut teleport_stripes = vec![];
+        let edges_to_glue = solve_cube_minimap(minimap);
+        let mut map = map.padded(1, ' ');
+        for (index, (side1, side2, rot, a, b)) in edges_to_glue.into_iter().enumerate() {
+            let mut a = a.scale(C.try_into().unwrap()).offset(Vector::all(1));
+            let mut b = b.scale(C.try_into().unwrap()).offset(Vector::all(1));
 
-        solve_cube_minimap(minimap);
+            if side1 == FaceEdge::Left {
+                a = a.offset(V2::from_xy(-1, 0));
+            }
+            if side1 == FaceEdge::Top {
+                a = a.offset(V2::from_xy(0, -1));
+            }
+            if side2 == FaceEdge::Left {
+                b = b.offset(V2::from_xy(-1, 0));
+            }
+            if side2 == FaceEdge::Top {
+                b = b.offset(V2::from_xy(0, -1));
+            }
+
+            assert!(a.start.x() <= a.end.x() && a.start.y() <= a.end.y());
+
+            if a.start.x() == a.end.x() {}
+
+            if b.start.x() <= b.end.x() && b.start.y() <= b.end.y() {
+                // ok
+            } else {
+                println!("B is inverted :(");
+                b = b.offset(b.delta().elementwise_unary(|x| x.signum()));
+            }
+
+            map.draw_line::<false>(a, 'O');
+            map.draw_line::<false>(b, 'O');
+            println!("{}", map);
+
+            teleport_stripes.push((rot, a, b));
+        }
+        println!("{}", map);
 
         let instructions = parse_instructions(&lines[split..].to_vec().concat());
 
@@ -280,40 +400,72 @@ impl Problem for Day<22> {
                 Instruction::TurnLeft => rotation += Modi32::new(-1),
                 Instruction::TurnRight => rotation += Modi32::new(1),
                 Instruction::Walk(w) => {
-                    let delta = rotation_to_direction(rotation);
                     let mut probe: V2i32 = pos;
-                    'outer: for _step in 0..w {
-                        loop {
-                            probe.addassign_n(delta, map_dims);
+                    let mut probe_rot = rotation;
+                    'steps: for _step in 0..w {
+                        'this_step: loop {
+                            probe.addassign_n(rotation_to_direction(probe_rot), map_dims);
                             match map.get(probe).unwrap() {
                                 '.' => {
                                     pos = probe;
+                                    rotation = probe_rot;
                                     draw_map
                                         .set(pos, ['>', 'v', '<', '^'][rotation.get() as usize]);
-                                    break;
+                                    break 'this_step;
                                 }
-                                '#' => break 'outer,
+                                'O' => {
+                                    if B {
+                                        for (rot, from, to) in teleport_stripes.iter() {
+                                            if let Some(from_index) =
+                                                from.iter::<false>().position(|x| x == probe)
+                                            {
+                                                probe = to.iter::<false>().nth(from_index).unwrap();
+                                                probe_rot += Modi32::new(*rot);
+                                                probe.addassign_n(
+                                                    rotation_to_direction(probe_rot),
+                                                    map_dims,
+                                                );
+
+                                                match map.get(probe).unwrap() {
+                                                    '.' => (),
+                                                    '#' => break 'steps,
+                                                    _ => panic!(),
+                                                }
+
+                                                pos = probe;
+                                                rotation = probe_rot;
+                                                draw_map.set(
+                                                    pos,
+                                                    ['>', 'v', '<', '^'][rotation.get() as usize],
+                                                );
+                                                break 'this_step;
+                                            }
+                                        }
+                                        panic!("Unhandled teleport tile!");
+                                    }
+                                }
+                                '#' => break 'steps,
                                 ' ' => (),
-                                _ => panic!(),
+                                _ => (),
                             }
                         }
                     }
                 }
             }
             // println!("{}", draw_map);
-            // println!("Pos {} Rot {}", pos, rotation);
+            println!("Pos {} Rot {}", pos, rotation);
         }
 
         println!("{}", draw_map);
 
         println!("Pos {} Rot {}", pos, rotation);
-        let row = pos.y() + 1;
-        let col = pos.x() + 1;
+        let row = pos.y() + 0;
+        let col = pos.x() + 0;
         let rot = match rotation.get() {
             0 => 0,
-            1 => 3,
+            1 => 1,
             2 => 2,
-            3 => 1,
+            3 => 3,
             _ => panic!(),
         };
         println!(

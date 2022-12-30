@@ -1,6 +1,7 @@
 use std::{io::prelude::*, io::BufReader, str::FromStr};
 
 use crate::lkc::arraynd::Array2d;
+use crate::lkc::line::Line;
 use crate::lkc::transformations::{Transform, Translation};
 
 use crate::lkc::geometric_traits::{CoverObject, Movement4Directions};
@@ -44,7 +45,7 @@ impl<const C: bool> Problem for Day14<C> {
         let floor_a = t.inverse_transform(floor_a);
         let floor_b = t.inverse_transform(floor_b);
         if C {
-            map.draw_line(floor_a, floor_b, '#');
+            map.draw_line::<true>(Line::new(floor_a, floor_b), '#');
         }
 
         for line in lines.iter() {
@@ -52,7 +53,7 @@ impl<const C: bool> Problem for Day14<C> {
             for coords in line.split("->") {
                 let coords = t.inverse_transform(V2::<i32>::from_str(coords).unwrap());
                 if let Some(prev) = prev {
-                    map.draw_line(prev, coords, '#');
+                    map.draw_line::<true>(Line::new(prev, coords), '#');
                 }
                 prev = Some(coords);
             }

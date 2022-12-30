@@ -21,7 +21,11 @@ impl<const C: usize, T: Display> Display for Vector<C, T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Vector(")?;
         for x in 0..C {
-            write!(f, "{}, ", self.values[x])?;
+            if x == C - 1 {
+                write!(f, "{}", self.values[x])?;
+            } else {
+                write!(f, "{}, ", self.values[x])?;
+            }
         }
         write!(f, ")")
     }
@@ -36,15 +40,65 @@ impl<const C: usize, T> Vector<C, T> {
 impl<const C: usize, T> Vector<C, T>
 where
     T: Copy,
+{
+    pub fn all(value: T) -> Self {
+        Self { values: [value; C] }
+    }
+
+    pub fn elementwise_unary<F: Fn(T) -> T>(&self, f: F) -> Self {
+        let mut result = self.values;
+        for x in 0..C {
+            result[x] = f(result[x]);
+        }
+        Self::new(result)
+    }
+    pub fn aggregate_unary<F: Fn(T, T) -> T>(&self, f: F) -> T {
+        let mut acc = self.values[0];
+        for x in 1..C {
+            acc = f(acc, self.values[x]);
+        }
+        acc
+    }
+    pub fn elementwise_binary<F: Fn(T, T) -> T>(&self, rhs: Self, f: F) -> Self {
+        let mut result = self.values;
+        for x in 0..C {
+            result[x] = f(result[x], rhs.values[x]);
+        }
+        Self::new(result)
+    }
+}
+
+impl<const C: usize, T> Vector<C, T>
+where
+    T: Copy,
+    T: Ord,
+{
+    pub fn elementwise_min(&self, rhs: Self) -> Self {
+        self.elementwise_binary(rhs, |a, b| a.min(b))
+    }
+    pub fn elementwise_max(&self, rhs: Self) -> Self {
+        self.elementwise_binary(rhs, |a, b| a.min(b))
+    }
+}
+
+impl<const C: usize, T> Vector<C, T>
+where
+    T: Copy,
     T: Add<Output = T>,
     T: Mul<Output = T>,
 {
     pub fn inner(&self, rhs: Self) -> T {
-        let mut result = self.values[0] * rhs.values[0];
-        for x in 1..C {
-            result = result + self.values[x] * rhs.values[x];
-        }
-        result
+        self.elementwise_binary(rhs, |a, b| a * b)
+            .aggregate_unary(|acc, x| acc + x)
+    }
+}
+
+impl V2i32 {
+    pub fn winding(&self, rhs: Self) -> i32 {
+        (self.x() * rhs.y()) - (self.y() * rhs.x())
+    }
+    pub fn perp(&self) -> Self {
+        Self::from_xy(-self.y(), self.x())
     }
 }
 

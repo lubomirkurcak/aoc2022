@@ -1,12 +1,12 @@
 use super::vector::Vector;
 
-pub struct LineIterator<const C: usize> {
+pub struct LineIterator<const B: bool, const C: usize> {
     step_options: Vec<Vector<C, i32>>,
     at: Vector<C, i32>,
     end: Vector<C, i32>,
 }
 
-impl<const C: usize> LineIterator<C> {
+impl<const B: bool, const C: usize> LineIterator<B, C> {
     pub fn new(start: Vector<C, i32>, end: Vector<C, i32>) -> Self {
         LineIterator {
             at: start,
@@ -15,11 +15,20 @@ impl<const C: usize> LineIterator<C> {
         }
     }
 }
-impl<const C: usize> Iterator for LineIterator<C> {
+impl<const B: bool, const C: usize> Iterator for LineIterator<B, C> {
     type Item = Vector<C, i32>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.step_options.is_empty() {
+            if self.at == self.end {
+                self.step_options.push(Vector::all(0));
+                if B {
+                    return Some(self.at);
+                } else {
+                    return None;
+                }
+            }
+
             let mut dir = self.end - self.at;
             for i in 0..C {
                 if dir.values[i] > 0 {
@@ -54,6 +63,10 @@ impl<const C: usize> Iterator for LineIterator<C> {
                 .max_by_key(|step| delta.inner(**step))
                 .unwrap();
             self.at += best_step;
+
+            if !B && self.at == self.end {
+                return None;
+            }
 
             Some(self.at)
         } else {

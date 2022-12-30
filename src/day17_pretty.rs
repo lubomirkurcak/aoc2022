@@ -7,7 +7,8 @@ use crate::{
         cli::Progress,
         explore::{Exploration, ExploreSignals},
         line::LineV2i32,
-        vector::V2, sketch::StackBag,
+        sketch::StackBag,
+        vector::V2,
     },
     Problem,
 };
@@ -24,7 +25,7 @@ impl<const C: usize> Problem for Day17<C> {
             blueprint
                 .iter()
                 .map(|line: &LineV2i32| {
-                    map.iter_values_in_line(line.start + p, line.end + p)
+                    map.iter_values_in_line::<true>(line.start + p, line.end + p)
                         .all(|c| c == &'.')
                 })
                 .all(|x| x)
@@ -32,7 +33,7 @@ impl<const C: usize> Problem for Day17<C> {
 
         let draw = |map: &mut Array2d<char>, blueprint: &Vec<LineV2i32>, p| {
             blueprint.iter().for_each(|line| {
-                map.draw_line(line.start + p, line.end + p, '#');
+                map.draw_line::<true>(line.offset(p), '#');
             })
         };
 
@@ -81,7 +82,7 @@ impl<const C: usize> Problem for Day17<C> {
 
                     loop {
                         let a = map
-                            .line_iter(
+                            .line_iter::<true>(
                                 V2::from_xy(0, first_non_full_row),
                                 V2::from_xy(6, first_non_full_row),
                             )

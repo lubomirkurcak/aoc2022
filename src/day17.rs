@@ -58,7 +58,7 @@ impl Rock {
     pub fn construct_blueprint_mask(blueprint: Vec<LineV2i32>) -> u32 {
         let mut bit_rep = 0;
         for line in blueprint {
-            for p in line.iter() {
+            for p in line.iter::<true>() {
                 bit_rep |= Self::get_bit_value(p.x(), p.y());
             }
         }

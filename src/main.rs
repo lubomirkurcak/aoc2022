@@ -2,6 +2,7 @@ use std::{fs::File, io::BufReader, path::Path};
 
 use crate::{
     day19::Day19,
+    day22::Day22,
     lkc::{arraynd::Array2d, geometric_algebra::Multivector3, vector::V2},
 };
 
@@ -43,7 +44,9 @@ fn main() {
     // Day19::<32, true>::solve_file("in19_small.txt", &mut writer);
     //Day19::<24, false>::solve_file("in19.txt", &mut writer);
     //Day19::<32, true>::solve_file("in19.txt", &mut writer);
-    Day::<22>::solve_file("in22.txt", &mut writer);
+    // Day22::<false>::solve_file("in22.txt", &mut writer);
+    // Day22::<true, 4>::solve_file("in22_small.txt", &mut writer);
+    Day22::<true, 50>::solve_file("in22.txt", &mut writer);
     //Day::<22>::solve_file("in22_small.txt", &mut writer);
     println!("Time: {:?}", t0.elapsed());
 }

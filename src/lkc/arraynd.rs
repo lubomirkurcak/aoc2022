@@ -6,6 +6,7 @@ use std::{
 
 use super::{
     geometric_traits::{IterateNeighbours, IterateNeighboursContext},
+    line::Line,
     line_iterator::LineIterator,
     linear_index::LinearIndex,
     vector::{V2i32, V2usize, Vector},
@@ -35,6 +36,30 @@ impl<const C: usize, T: Copy> ArrayNd<C, T> {
             dims: d,
             dim_strides,
         }
+    }
+    pub fn resized(&self, new_dims: [usize; C], default: T, offset: Vector<C, i32>) -> Self {
+        let mut new = Self::new(new_dims, default);
+        new.data
+            .iter_mut()
+            .enumerate()
+            .for_each(|(linear_index, val)| {
+                let i: Vector<C, i32> = Vector::new(new_dims)
+                    .unindex(linear_index)
+                    .unwrap()
+                    .try_into()
+                    .unwrap();
+                if let Some(src) = self.get(i - offset) {
+                    *val = *src;
+                }
+            });
+
+        new
+    }
+    pub fn padded(&self, padding: i32, default: T) -> Self {
+        let mut new_dims = self.dims;
+        new_dims.iter_mut().for_each(|x| *x += 2 * padding as usize);
+
+        self.resized(new_dims, default, Vector::all(padding))
     }
 }
 
@@ -96,7 +121,11 @@ impl<const N: usize, T> LinearIndex<Vector<N, $t>> for ArrayNd<N, T> {
         }
     }
     fn is_in_bounds(&self, i: &Vector<N, $t>) -> bool {
-        Vector::new(self.dims).is_in_bounds(&((*i).try_into().unwrap()))
+        if let Ok(a) = (*i).try_into() {
+            Vector::new(self.dims).is_in_bounds(&a)
+        } else {
+            false
+        }
     }
 }
         )*
@@ -210,28 +239,42 @@ impl<const N: usize, T> ArrayNd<N, T> {
 }
 
 impl<const N: usize, T> ArrayNd<N, T> {
-    pub fn line_iter(&self, p0: Vector<N, i32>, p1: Vector<N, i32>) -> LineIterator<N> {
+    pub fn line_iter<const B: bool>(
+        &self,
+        p0: Vector<N, i32>,
+        p1: Vector<N, i32>,
+    ) -> LineIterator<B, N> {
         LineIterator::new(p0, p1)
     }
 }
 
 impl<const N: usize, T> ArrayNd<N, T> {
-    pub fn iter_values_in_line(
+    pub fn iter_values_in_line<const B: bool>(
         &'_ self,
         p0: Vector<N, i32>,
         p1: Vector<N, i32>,
     ) -> impl Iterator<Item = &'_ T> {
         // self.line_iter(p0, p1).filter_map(|p| self.get(p))
-        self.line_iter(p0, p1).map(|p| self.get(p).unwrap())
+        self.line_iter::<B>(p0, p1).map(|p| self.get(p).unwrap())
     }
 }
 
 impl<const N: usize, T: Copy> ArrayNd<N, T> {
-    pub fn draw_line(&mut self, p0: Vector<N, i32>, p1: Vector<N, i32>, v: T) {
-        for p in self.line_iter(p0, p1) {
+    pub fn draw_line<const B: bool>(&mut self, line: Line<Vector<N, i32>>, v: T) {
+        for p in self.line_iter::<B>(line.start, line.end) {
             self.set(p, v);
         }
     }
+    // pub fn draw_line_from_points<const B: bool>(
+    //     &mut self,
+    //     p0: Vector<N, i32>,
+    //     p1: Vector<N, i32>,
+    //     v: T,
+    // ) {
+    //     for p in self.line_iter::<B>(p0, p1) {
+    //         self.set(p, v);
+    //     }
+    // }
 }
 
 // NOTE(lubo): Choose which slice (index) to paint in each dimension, or pass None to paint all tiles in that dimension.
