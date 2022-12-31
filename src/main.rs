@@ -25,6 +25,7 @@ mod day2;
 mod day20;
 mod day21;
 mod day22;
+mod day23;
 mod day3;
 mod day4;
 mod day5;
@@ -44,10 +45,7 @@ fn main() {
     // Day19::<32, true>::solve_file("in19_small.txt", &mut writer);
     //Day19::<24, false>::solve_file("in19.txt", &mut writer);
     //Day19::<32, true>::solve_file("in19.txt", &mut writer);
-    // Day22::<false>::solve_file("in22.txt", &mut writer);
-    // Day22::<true, 4>::solve_file("in22_small.txt", &mut writer);
-    Day22::<true, 50>::solve_file("in22.txt", &mut writer);
-    //Day::<22>::solve_file("in22_small.txt", &mut writer);
+    Day::<23>::solve_file("in23.txt", &mut writer);
     println!("Time: {:?}", t0.elapsed());
 }
 
@@ -85,6 +83,7 @@ mod tests {
         day17_optimized::Day17Optimized,
         day17_pretty::Day17,
         day20::Day20,
+        day22::Day22,
         day3::{Day3CommonItemInCompartments, Day3CommonItemInGroups},
         day4::{Day4, OneFullyInsideAnotherOptimized, OneFullyInsideAnotherSimple, Overlap},
         day5::{CrateMover9000, CrateMover9001, Day5},
@@ -487,5 +486,41 @@ mod tests {
         let output_raw = writer.into_inner();
         let output = std::str::from_utf8(&output_raw).unwrap().trim();
         assert_eq!(output, "3469704905529");
+    }
+
+    #[test]
+    fn day22_small1() {
+        let mut writer = std::io::Cursor::new(vec![]);
+        Day22::<false, 4>::solve_file("in22_small.txt", &mut writer);
+        let output_raw = writer.into_inner();
+        let output = std::str::from_utf8(&output_raw).unwrap().trim();
+        assert_eq!(output, "6032");
+    }
+
+    #[test]
+    fn day22_small2() {
+        let mut writer = std::io::Cursor::new(vec![]);
+        Day22::<true, 4>::solve_file("in22_small.txt", &mut writer);
+        let output_raw = writer.into_inner();
+        let output = std::str::from_utf8(&output_raw).unwrap().trim();
+        assert_eq!(output, "5031");
+    }
+
+    #[test]
+    fn day22_big1() {
+        let mut writer = std::io::Cursor::new(vec![]);
+        Day22::<false, 50>::solve_file("in22.txt", &mut writer);
+        let output_raw = writer.into_inner();
+        let output = std::str::from_utf8(&output_raw).unwrap().trim();
+        assert_eq!(output, "103224");
+    }
+
+    #[test]
+    fn day22_big2() {
+        let mut writer = std::io::Cursor::new(vec![]);
+        Day22::<true, 50>::solve_file("in22.txt", &mut writer);
+        let output_raw = writer.into_inner();
+        let output = std::str::from_utf8(&output_raw).unwrap().trim();
+        assert_eq!(output, "189097");
     }
 }

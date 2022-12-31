@@ -459,8 +459,8 @@ impl<const B: bool, const C: usize> Problem for Day22<B, C> {
         println!("{}", draw_map);
 
         println!("Pos {} Rot {}", pos, rotation);
-        let row = pos.y() + 0;
-        let col = pos.x() + 0;
+        let row = pos.y();
+        let col = pos.x();
         let rot = match rotation.get() {
             0 => 0,
             1 => 1,
@@ -468,15 +468,9 @@ impl<const B: bool, const C: usize> Problem for Day22<B, C> {
             3 => 3,
             _ => panic!(),
         };
-        println!(
-            "Row {} Col {} Rot {} Final {}",
-            row,
-            col,
-            rot,
-            1000 * row + 4 * col + rot
-        );
+        let result = 1000 * row + 4 * col + rot;
+        println!("Row {} Col {} Rot {} Final {}", row, col, rot, result);
 
-        let result = 0;
         writeln!(writer, "{}", result).unwrap();
     }
 }
