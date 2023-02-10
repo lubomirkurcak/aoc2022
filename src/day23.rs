@@ -1,27 +1,22 @@
 #![allow(clippy::reversed_empty_ranges)]
 
 use ndarray::{prelude::*, Zip};
-use std::io::BufReader;
-
-const INPUT: &[u8] = include_bytes!("../in23.txt");
-const N: usize = 74;
-// const INPUT: &[u8] = include_bytes!("../in23_small.txt");
-// const N: usize = 7;
-const PAD_SIZE: usize = N;
-const M: usize = N + 2 * PAD_SIZE;
+use std::io::{BufReader, Read};
 
 type Board = Array2<i8>;
 
-fn parse(x: &[u8]) -> Board {
+fn parse(n: usize, x: &[u8]) -> Board {
+    let pad_size: usize = n;
+    let m: usize = n + 2 * pad_size;
     let a = Array::from_iter(x.iter().filter_map(|&b| match b {
         b'#' => Some(1),
         b'.' => Some(0),
         _ => None,
     }));
-    let a = a.into_shape((N, N)).unwrap();
+    let a = a.into_shape((n, n)).unwrap();
 
-    let mut map = Board::from_elem((M, M), 0);
-    let pad_size: i32 = PAD_SIZE.try_into().unwrap();
+    let mut map = Board::from_elem((m, m), 0);
+    let pad_size: i32 = pad_size.try_into().unwrap();
     map.slice_mut(s![pad_size..-pad_size, pad_size..-pad_size])
         .assign(&a);
     map
@@ -34,22 +29,14 @@ const NY: i8 = 8; // North
 const OCC: i8 = 16; // Occupied
 
 fn iterate(z: &mut Board, dir_order: &[i8]) -> bool {
-    let mut neigh_mask = Board::zeros((M - 2, M - 2));
-    let mut proposition_dirs = Board::zeros((M, M));
-    let mut proposition_ps = Board::zeros((M, M));
-    let mut move_tos = Board::zeros((M, M));
-    let mut move_froms = Board::zeros((M, M));
+    let m = z.dim().0;
 
-    neigh_mask.fill(0);
-    proposition_dirs.fill(0);
-    proposition_ps.fill(0);
-    move_tos.fill(0);
-    move_froms.fill(0);
-
-    // NOTE(lubo): Check if there are neighbours in each direction according to the problem definition
-    // We use 5 bits: <-- high [Occupied = 4][South = 3][West = 2][North = 1][East = 0] low -->
-    //   - Occupied if there is a guy at the tile
-    //   - <Direction> if there are neighbours in that direction
+    // TODO(lubo): Might be a good idea to cache these. (Optimized build probably already does but unoptimized unit test run struggles)
+    let mut neigh_mask = Board::zeros((m - 2, m - 2));
+    let mut proposition_dirs = Board::zeros((m, m));
+    let mut proposition_ps = Board::zeros((m, m));
+    let mut move_tos = Board::zeros((m, m));
+    let mut move_froms = Board::zeros((m, m));
 
     let center = s![1..-1, 1..-1];
     let nx = s![1..-1, ..-2];
@@ -109,7 +96,7 @@ fn iterate(z: &mut Board, dir_order: &[i8]) -> bool {
             if (n & (PX | PY | NX | NY)) > 0 {
                 terminal = false;
                 for dir in dir_order.iter() {
-                    if (n & OCC) > 0 && (n & dir) == 0 {
+                    if (n & dir) == 0 {
                         *x |= *dir;
                         break;
                     }
@@ -159,14 +146,8 @@ fn iterate(z: &mut Board, dir_order: &[i8]) -> bool {
         }
     });
 
-    // // ... and those who do not want to move
-    // let pdv_none = proposition_dirs.slice_mut(s![1..-1, 1..-1]);
-    // ppv.zip_mut_with(&pdv_none, |y, &x| {
-    //     if (x & OCC) > 0 && (x & (PX | PY | NX | NY)) > 0 {
-    //         *y -= 100;
-    //     }
-    // });
-
+    // TODO(lubo): Could we zip and update all of these in one go?!
+    // NOTE(lubo): Move if there is only one proposal to that destination
     Zip::from(&mut move_tos.slice_mut(center))
         .and(&mut move_froms.slice_mut(px))
         .and(&ppv)
@@ -216,45 +197,29 @@ fn iterate(z: &mut Board, dir_order: &[i8]) -> bool {
     false
 }
 
-fn render(a: &Board) {
-    for row in a.rows() {
-        for &x in row {
-            if x != 0 {
-                print!("#");
-            } else {
-                print!(".");
-            }
-        }
-        println!();
-    }
-}
-
 use crate::{
     lkc::{aabb::Aabb, vector::Vector},
     Day, Problem,
 };
 
 impl Problem for Day<2301> {
-    fn solve_buffer<T, W>(reader: BufReader<T>, writer: &mut W)
+    fn solve_buffer<T, W>(mut reader: BufReader<T>, writer: &mut W)
     where
         T: std::io::Read,
         W: std::io::Write,
     {
         println!("North: {NY} (NY)  South: {PY} (PY)  West: {NX} (NX)  East: {PX} (PX)");
-        let mut dir_order = vec![NY, PY, NX, PX];
 
-        let mut a = parse(INPUT);
-        println!("Initial state");
-        render(&a);
+        let mut buffer = vec![];
+        let n_squared = reader.read_to_end(&mut buffer).unwrap();
+        let n = f64::sqrt(n_squared as f64) as usize;
+        let mut a = parse(n, &buffer);
+        let mut dir_order = vec![NY, PY, NX, PX];
         let steps = 10;
         for _ in 0..steps {
             iterate(&mut a, &dir_order);
             dir_order.rotate_left(1);
-            // println!("--");
-            // render(&a);
         }
-        println!("--");
-        render(&a);
 
         let elves = a
             .indexed_iter()
@@ -274,19 +239,20 @@ impl Problem for Day<2301> {
         let free_spaces = aabb_area - elves_count;
 
         println!("There are {free_spaces} free spaces in AABB");
-
-        let result = free_spaces;
-        writeln!(writer, "{result}").unwrap();
+        writeln!(writer, "{free_spaces}").unwrap();
     }
 }
 
 impl Problem for Day<2302> {
-    fn solve_buffer<T, W>(reader: BufReader<T>, writer: &mut W)
+    fn solve_buffer<T, W>(mut reader: BufReader<T>, writer: &mut W)
     where
         T: std::io::Read,
         W: std::io::Write,
     {
-        let mut a = parse(INPUT);
+        let mut buffer = vec![];
+        let n_squared = reader.read_to_end(&mut buffer).unwrap();
+        let n = f64::sqrt(n_squared as f64) as usize;
+        let mut a = parse(n, &buffer);
         let mut step: usize = 0;
 
         let mut dir_order = vec![NY, PY, NX, PX];

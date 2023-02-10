@@ -1,11 +1,5 @@
 use std::{fs::File, io::BufReader, path::Path};
 
-use crate::{
-    day19::Day19,
-    day22::Day22,
-    lkc::{arraynd::Array2d, geometric_algebra::Multivector3, vector::V2},
-};
-
 mod day1;
 mod day10;
 mod day11;
@@ -26,6 +20,7 @@ mod day20;
 mod day21;
 mod day22;
 mod day23;
+mod day24;
 mod day3;
 mod day4;
 mod day5;
@@ -45,7 +40,7 @@ fn main() {
     // Day19::<32, true>::solve_file("in19_small.txt", &mut writer);
     //Day19::<24, false>::solve_file("in19.txt", &mut writer);
     //Day19::<32, true>::solve_file("in19.txt", &mut writer);
-    Day::<2302>::solve_file("in23.txt", &mut writer);
+    Day::<24>::solve_file("in24.txt", &mut writer);
     println!("Time: {:?}", t0.elapsed());
 }
 
@@ -522,5 +517,41 @@ mod tests {
         let output_raw = writer.into_inner();
         let output = std::str::from_utf8(&output_raw).unwrap().trim();
         assert_eq!(output, "189097");
+    }
+
+    #[test]
+    fn day23_part1_small() {
+        let mut writer = std::io::Cursor::new(vec![]);
+        Day::<2301>::solve_file("in23_small.txt", &mut writer);
+        let output_raw = writer.into_inner();
+        let output = std::str::from_utf8(&output_raw).unwrap().trim();
+        assert_eq!(output, "110");
+    }
+
+    #[test]
+    fn day23_part2_small() {
+        let mut writer = std::io::Cursor::new(vec![]);
+        Day::<2302>::solve_file("in23_small.txt", &mut writer);
+        let output_raw = writer.into_inner();
+        let output = std::str::from_utf8(&output_raw).unwrap().trim();
+        assert_eq!(output, "20");
+    }
+
+    #[test]
+    fn day23_part1() {
+        let mut writer = std::io::Cursor::new(vec![]);
+        Day::<2301>::solve_file("in23.txt", &mut writer);
+        let output_raw = writer.into_inner();
+        let output = std::str::from_utf8(&output_raw).unwrap().trim();
+        assert_eq!(output, "4195");
+    }
+
+    #[test]
+    fn day23_part2() {
+        let mut writer = std::io::Cursor::new(vec![]);
+        Day::<2302>::solve_file("in23.txt", &mut writer);
+        let output_raw = writer.into_inner();
+        let output = std::str::from_utf8(&output_raw).unwrap().trim();
+        assert_eq!(output, "1069");
     }
 }
