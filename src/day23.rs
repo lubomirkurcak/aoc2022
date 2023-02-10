@@ -3,12 +3,11 @@
 use ndarray::{prelude::*, Zip};
 use std::io::BufReader;
 
-// const INPUT: &[i8] = include_bytes!("../in23.txt");
-// const N: usize = 74;
-const INPUT: &[u8] = include_bytes!("../in23_small.txt");
-const N: usize = 7;
-// const PAD_SIZE: usize = N;
-const PAD_SIZE: usize = 2;
+const INPUT: &[u8] = include_bytes!("../in23.txt");
+const N: usize = 74;
+// const INPUT: &[u8] = include_bytes!("../in23_small.txt");
+// const N: usize = 7;
+const PAD_SIZE: usize = N;
 const M: usize = N + 2 * PAD_SIZE;
 
 type Board = Array2<i8>;
@@ -34,9 +33,7 @@ const NX: i8 = 4; // West
 const NY: i8 = 8; // North
 const OCC: i8 = 16; // Occupied
 
-fn iterate(z: &mut Board, dir_order: &[i8]) {
-    println!("Current dir order {dir_order:?}");
-
+fn iterate(z: &mut Board, dir_order: &[i8]) -> bool {
     let mut neigh_mask = Board::zeros((M - 2, M - 2));
     let mut proposition_dirs = Board::zeros((M, M));
     let mut proposition_ps = Board::zeros((M, M));
@@ -101,29 +98,31 @@ fn iterate(z: &mut Board, dir_order: &[i8]) {
     neigh_mask = neigh_mask | (PX * slice);
     neigh_mask = neigh_mask | (PY * slice);
 
-    println!("neigh mask");
-    render_hex(&neigh_mask);
+    let mut terminal = true;
 
     // NOTE(lubo): "First half" - pick the first available direction according to the problem definition
-    let mut pdv = proposition_dirs.slice_mut(s![1..-1, 1..-1]);
+    let mut pdv = proposition_dirs.slice_mut(center);
     pdv.zip_mut_with(&neigh_mask, |x, &n| {
         if (n & OCC) > 0 {
             *x = OCC;
-        }
 
-        for dir in dir_order.iter() {
-            if (n & OCC) > 0 && (n & dir) == 0 {
-                *x |= *dir;
-                break;
+            if (n & (PX | PY | NX | NY)) > 0 {
+                terminal = false;
+                for dir in dir_order.iter() {
+                    if (n & OCC) > 0 && (n & dir) == 0 {
+                        *x |= *dir;
+                        break;
+                    }
+                }
             }
         }
     });
 
-    println!("prop dirs");
-    render_hex(&proposition_dirs);
+    if terminal {
+        return true;
+    }
 
     // NOTE(lubo): "Second half"
-    // let mut ppv = z.slice_mut(s![1..-1, 1..-1]);
     let mut ppv = proposition_ps.slice_mut(center);
 
     let pdv_px = proposition_dirs.slice(px);
@@ -212,83 +211,97 @@ fn iterate(z: &mut Board, dir_order: &[i8]) {
             }
         });
 
-    println!("move tos");
-    render_hex(&move_tos);
-
-    println!("move from");
-    render_hex(&move_froms);
-
-    println!("do it");
-
     azip!((z in z, &to in &move_tos, &from in &move_froms) *z += to - from);
 
-    // move_tos.zip_mut_with(&move_froms, |a, b| *a -= b);
-    // render_hex(z);
-}
-
-fn render_hex(a: &Board) {
-    for row in a.rows() {
-        for &x in row {
-            if x != 0 {
-                if x & OCC > 0 {
-                    print!("#");
-                } else {
-                    print!(".");
-                }
-
-                print!("{:x}", x & !OCC);
-            } else {
-                print!(". ");
-            }
-        }
-        println!();
-    }
+    false
 }
 
 fn render(a: &Board) {
     for row in a.rows() {
         for &x in row {
             if x != 0 {
-                print!("[]");
-                // print!("#");
+                print!("#");
             } else {
-                // print!(".");
-                print!(". ");
+                print!(".");
             }
         }
         println!();
     }
 }
 
-use crate::{Day, Problem};
+use crate::{
+    lkc::{aabb::Aabb, vector::Vector},
+    Day, Problem,
+};
 
-impl Problem for Day<23> {
+impl Problem for Day<2301> {
     fn solve_buffer<T, W>(reader: BufReader<T>, writer: &mut W)
     where
         T: std::io::Read,
         W: std::io::Write,
     {
-        let mut result = 0;
-
         println!("North: {NY} (NY)  South: {PY} (PY)  West: {NX} (NX)  East: {PX} (PX)");
         let mut dir_order = vec![NY, PY, NX, PX];
 
-        // NOTE(lubo): looks good but need to not do anything when no neighbours
         let mut a = parse(INPUT);
         println!("Initial state");
         render(&a);
-        println!("--");
-        let steps = 100;
+        let steps = 10;
         for _ in 0..steps {
             iterate(&mut a, &dir_order);
             dir_order.rotate_left(1);
-            println!("--");
-            render(&a);
+            // println!("--");
+            // render(&a);
         }
+        println!("--");
         render(&a);
-        let alive = a.iter().filter(|&&x| x > 0).count();
-        println!("After {} steps there are {} cells alive", steps, alive);
 
-        writeln!(writer, "{}", result).unwrap();
+        let elves = a
+            .indexed_iter()
+            .filter_map(|(i, &x)| {
+                if x > 0 {
+                    Some(Vector::from_xy(i.1, i.0))
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
+
+        let elves_aabb = Aabb::covering(&elves).unwrap();
+        let aabb_dim = elves_aabb.dim();
+        let aabb_area = (aabb_dim.x() + 1) * (aabb_dim.y() + 1);
+        let elves_count = a.iter().filter(|&&x| x > 0).count();
+        let free_spaces = aabb_area - elves_count;
+
+        println!("There are {free_spaces} free spaces in AABB");
+
+        let result = free_spaces;
+        writeln!(writer, "{result}").unwrap();
+    }
+}
+
+impl Problem for Day<2302> {
+    fn solve_buffer<T, W>(reader: BufReader<T>, writer: &mut W)
+    where
+        T: std::io::Read,
+        W: std::io::Write,
+    {
+        let mut a = parse(INPUT);
+        let mut step: usize = 0;
+
+        let mut dir_order = vec![NY, PY, NX, PX];
+        loop {
+            if iterate(&mut a, &dir_order) {
+                break;
+            }
+            dir_order.rotate_left(1);
+            step += 1;
+        }
+
+        // NOTE(lubo): For some reason aoc wants one more than we get here.
+        let step = step + 1;
+
+        println!("Simulation terminates in {step} steps.");
+        writeln!(writer, "{step}").unwrap();
     }
 }

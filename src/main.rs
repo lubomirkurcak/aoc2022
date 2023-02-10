@@ -45,7 +45,7 @@ fn main() {
     // Day19::<32, true>::solve_file("in19_small.txt", &mut writer);
     //Day19::<24, false>::solve_file("in19.txt", &mut writer);
     //Day19::<32, true>::solve_file("in19.txt", &mut writer);
-    Day::<23>::solve_file("in23.txt", &mut writer);
+    Day::<2302>::solve_file("in23.txt", &mut writer);
     println!("Time: {:?}", t0.elapsed());
 }
 
