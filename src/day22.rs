@@ -1,6 +1,5 @@
 use std::{
-    collections::{HashMap, HashSet, VecDeque},
-    fmt::Display,
+    collections::{HashMap, HashSet},
     io::prelude::*,
     io::BufReader,
 };
@@ -8,15 +7,12 @@ use std::{
 use crate::{
     lkc::{
         arraynd::Array2d,
-        explore::{Exploration, ExploreSignals},
-        geometric_algebra::Multivector3,
         line::{Line, LineV2i32},
         linear_index::LinearIndex,
-        modular::{Modi32, ModularAdd, ModularAddAssign},
-        sketch::StackBag,
-        vector::{V2i32, V2usize, Vector, V2, V3},
+        modular::{Modi32, ModularAddAssign},
+        vector::{V2i32, Vector, V2},
     },
-    Day, Problem,
+    Problem,
 };
 
 #[derive(Debug)]

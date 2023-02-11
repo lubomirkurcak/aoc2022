@@ -197,11 +197,29 @@ impl<const N: usize, T> ArrayNd<N, T> {
         }
     }
 
+    fn find_last_internal<I>(&self, item: &T) -> Option<I>
+    where
+        T: PartialEq,
+        Self: LinearIndex<I>,
+    {
+        match self.data.iter().rev().position(|x| x == item) {
+            Some(index) => self.unindex(index),
+            None => None,
+        }
+    }
+
     pub fn find(&self, item: &T) -> Option<Vector<N, i32>>
     where
         T: PartialEq,
     {
         self.find_internal(item)
+    }
+
+    pub fn find_last(&self, item: &T) -> Option<Vector<N, i32>>
+    where
+        T: PartialEq,
+    {
+        self.find_last_internal(item)
     }
 
     pub fn find_all<I>(&self, item: &T) -> Vec<I>
