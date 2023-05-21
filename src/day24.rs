@@ -12,25 +12,6 @@ use crate::{
     Day, Problem,
 };
 
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
-struct Point {
-    p: V2i32,
-    t: i32,
-}
-
-impl IterateNeighbours<Array2d<char>> for Point {
-    fn neighbours(&self, context: &Array2d<char>) -> Vec<Self> {
-        self.p
-            .neighbours(context)
-            .into_iter()
-            .map(|x| Self {
-                p: x,
-                t: self.t + 1,
-            })
-            .collect()
-    }
-}
-
 struct BlizzardMap {
     map: Array2d<char>,
     left: Vec<V2i32>,
@@ -128,6 +109,25 @@ impl BlizzardMap {
     }
 }
 
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+struct Point {
+    p: V2i32,
+    t: i32,
+}
+
+impl IterateNeighbours<Array2d<char>> for Point {
+    fn neighbours(&self, context: &Array2d<char>) -> Vec<Self> {
+        self.p
+            .neighbours(context)
+            .into_iter()
+            .map(|x| Self {
+                p: x,
+                t: self.t + 1,
+            })
+            .collect()
+    }
+}
+
 impl Problem for Day<24> {
     fn solve_buffer<T, W>(reader: BufReader<T>, writer: &mut W)
     where
@@ -145,20 +145,31 @@ impl Problem for Day<24> {
 
         println!("{}", awdlijalwijd);
 
-        let mut exp = Exploration::new(blizz.map, ());
+        let mut result = None;
+        let mut exp = Exploration::new(blizz.map.clone(), blizz);
         exp.explore::<_, _, QueueBag<_>>(
             Point { p: start, t: 0 },
-            |x, y, z| {
-                println!("Goal!");
-                ExploreSignals::Explore
+            |p, map, blizz| {
+                if p.p.x() > 3 || p.p.y() > 3 {
+                    println!("{:?}", p);
+                }
+
+                if p.p.y() + 1 == map.height().try_into().unwrap() {
+                    result = Some(p.t);
+                    ExploreSignals::ReachedGoal
+                } else {
+                    ExploreSignals::Explore
+                }
             },
-            |a, b, c, d| {
-                println!("Hi!");
-                false
+            |p, n, map, blizz| {
+                let map_at_time = blizz.at_time(n.t);
+                let n_standing_on = map_at_time.get(n.p).unwrap();
+                n_standing_on == &'.'
             },
         );
 
-        let result = 0;
-        writeln!(writer, "{}", result).unwrap();
+        println!("Found in {result:?} steps.");
+
+        writeln!(writer, "{:?}", result).unwrap();
     }
 }
