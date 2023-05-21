@@ -4,15 +4,13 @@ use std::{
     io::BufReader,
 };
 
-use crate::{
-    lkc::{
-        arraynd::Array2d,
-        line::{Line, LineV2i32},
-        linear_index::LinearIndex,
-        modular::{Modi32, ModularAddAssign},
-        vector::{V2i32, Vector, V2},
-    },
-    Problem,
+use crate::Problem;
+use lk_math::{
+    arraynd::Array2d,
+    line::{Line, LineV2i32},
+    linear_index::LinearIndex,
+    modular::{Modi32, ModularAddAssign},
+    vector::{V2i32, Vector, V2},
 };
 
 #[derive(Debug)]

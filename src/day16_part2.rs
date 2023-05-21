@@ -2,11 +2,12 @@ use std::{cmp::Ordering, hash::Hash, io::BufReader, vec};
 
 use crate::{
     day16::{PointTrait, Rooms},
-    lkc::{
-        explore::{Exploration, ExploreSignals, PointKeyValue},
-        geometric_traits::IterateNeighbours, sketch::StackBag,
-    },
     Day, Problem,
+};
+use lk_math::{
+    explore::{Exploration, ExploreSignals, PointKeyValue},
+    geometric_traits::IterateNeighbours,
+    sketch::StackBag,
 };
 
 use crate::day16::RoomId;

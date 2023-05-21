@@ -1,16 +1,13 @@
 use std::io::{BufRead, BufReader};
 
-use crate::{
-    day17::Rock,
-    lkc::{
-        arraynd::Array2d,
-        cli::Progress,
-        explore::{Exploration, ExploreSignals},
-        line::LineV2i32,
-        sketch::StackBag,
-        vector::V2,
-    },
-    Problem,
+use crate::{day17::Rock, Problem};
+use lk_math::{
+    arraynd::Array2d,
+    cli::Progress,
+    explore::{Exploration, ExploreSignals},
+    line::LineV2i32,
+    sketch::StackBag,
+    vector::V2,
 };
 
 pub struct Day17<const C: usize>;

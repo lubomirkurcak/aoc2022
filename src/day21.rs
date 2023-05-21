@@ -1,6 +1,7 @@
 use std::{collections::HashMap, io::prelude::*, io::BufReader};
 
-use crate::{lkc::expr::Expression, Day, Problem};
+use crate::{Day, Problem};
+use lk_math::expr::Expression;
 
 impl Problem for Day<2101> {
     fn solve_buffer<T, W>(reader: BufReader<T>, writer: &mut W)

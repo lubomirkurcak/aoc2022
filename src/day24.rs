@@ -1,15 +1,13 @@
 use std::{io::prelude::*, io::BufReader, ops::Index};
 
-use crate::{
-    lkc::{
-        arraynd::Array2d,
-        explore::{Exploration, ExploreSignals},
-        geometric_traits::IterateNeighbours,
-        math::Gcd,
-        sketch::{QueueBag, StackBag},
-        vector::{V2i32, Vector},
-    },
-    Day, Problem,
+use crate::{Day, Problem};
+use lk_math::{
+    arraynd::Array2d,
+    explore::{Exploration, ExploreSignals},
+    geometric_traits::IterateNeighbours,
+    math::Gcd,
+    sketch::{QueueBag, StackBag},
+    vector::{V2i32, Vector},
 };
 
 struct BlizzardMap {

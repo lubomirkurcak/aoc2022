@@ -197,10 +197,8 @@ fn iterate(z: &mut Board, dir_order: &[i8]) -> bool {
     false
 }
 
-use crate::{
-    lkc::{aabb::Aabb, vector::Vector},
-    Day, Problem,
-};
+use crate::{Day, Problem};
+use lk_math::{aabb::Aabb, vector::Vector};
 
 impl Problem for Day<2301> {
     fn solve_buffer<T, W>(mut reader: BufReader<T>, writer: &mut W)

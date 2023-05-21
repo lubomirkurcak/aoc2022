@@ -1,11 +1,10 @@
 use std::{io::prelude::*, io::BufReader, str::FromStr};
 
-use crate::{
-    lkc::{
-        explore::{Exploration, ExploreSignals},
-        geometric_traits::{IterateNeighbours, IterateNeighboursContext}, sketch::StackBag,
-    },
-    Problem,
+use crate::Problem;
+use lk_math::{
+    explore::{Exploration, ExploreSignals},
+    geometric_traits::{IterateNeighbours, IterateNeighboursContext},
+    sketch::StackBag,
 };
 
 type Ore = i32;

@@ -1,4 +1,4 @@
-use crate::lkc::{line::LineV2i32, vector::V2};
+use lk_math::{line::LineV2i32, vector::V2};
 
 pub struct Rock;
 impl Rock {

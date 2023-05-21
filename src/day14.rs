@@ -1,12 +1,14 @@
 use std::{io::prelude::*, io::BufReader, str::FromStr};
 
-use crate::lkc::arraynd::Array2d;
-use crate::lkc::line::Line;
-use crate::lkc::transformations::{Transform, Translation};
-
-use crate::lkc::geometric_traits::{CoverObject, Movement4Directions};
-use crate::lkc::vector::{Scalar, V2};
-use crate::{lkc::aabb::Aabb2, Problem};
+use crate::Problem;
+use lk_math::{
+    aabb::Aabb2,
+    arraynd::Array2d,
+    geometric_traits::{CoverObject, Movement4Directions},
+    line::Line,
+    transformations::{Transform, Translation},
+    vector::{Scalar, V2},
+};
 
 pub struct Day14<const C: bool>;
 

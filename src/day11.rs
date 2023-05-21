@@ -1,7 +1,6 @@
 use std::{collections::HashMap, io::prelude::*, io::BufReader};
 
-use crate::lkc::expr::Expression;
-use crate::lkc::math::*;
+use lk_math::{expr::Expression, math::*};
 use crate::Problem;
 
 type MonkeyId = usize;

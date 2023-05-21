@@ -1,12 +1,10 @@
 use std::io::BufReader;
 
-use crate::{
-    lkc::{
-        arraynd::Array2d,
-        explore::{Exploration, ExploreSignals},
-        sketch::QueueBag,
-    },
-    Day, Problem,
+use crate::{Day, Problem};
+use lk_math::{
+    arraynd::Array2d,
+    explore::{Exploration, ExploreSignals},
+    sketch::QueueBag,
 };
 
 impl Problem for Day<1201> {

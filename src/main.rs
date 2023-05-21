@@ -29,7 +29,6 @@ mod day7;
 mod day8;
 mod day9;
 mod day_template;
-mod lkc;
 
 fn main() {
     let mut writer = std::io::Cursor::new(vec![]);

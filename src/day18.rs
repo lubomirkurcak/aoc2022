@@ -1,14 +1,13 @@
 use std::{collections::HashSet, io::prelude::*, io::BufReader, str::FromStr};
 
-use crate::{
-    lkc::{
-        aabb::Aabb,
-        arraynd::Array3d,
-        explore::{Exploration, ExploreSignals},
-        geometric_traits::CoverObject,
-        vector::{Scalar, V3}, sketch::StackBag,
-    },
-    Day, Problem,
+use crate::{Day, Problem};
+use lk_math::{
+    aabb::Aabb,
+    arraynd::Array3d,
+    explore::{Exploration, ExploreSignals},
+    geometric_traits::CoverObject,
+    sketch::StackBag,
+    vector::{Scalar, V3},
 };
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]

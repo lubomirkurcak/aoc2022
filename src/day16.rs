@@ -1,6 +1,6 @@
 use std::{collections::HashMap, io::prelude::*, io::BufReader, vec};
 
-use crate::lkc::geometric_traits::IterateNeighboursContext;
+use lk_math::geometric_traits::IterateNeighboursContext;
 
 pub type RoomId = i32;
 
