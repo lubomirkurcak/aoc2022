@@ -225,11 +225,15 @@ impl Problem for Day<7> {
         let sum: usize = tree
             .immediate_directory_subdirectories
             .keys()
-            .into_iter()
             .map(|dir| tree.get_directory_size(dir).unwrap_or(0))
             .filter(|&x| x <= 100000)
             .sum();
-        writeln!(writer, "Sum of directory sizes of size at most 100k: {}", sum).unwrap();
+        writeln!(
+            writer,
+            "Sum of directory sizes of size at most 100k: {}",
+            sum
+        )
+        .unwrap();
 
         let used_memory = tree.get_directory_size("").unwrap();
         let total_memory = 70000000;
@@ -239,14 +243,15 @@ impl Problem for Day<7> {
         let smallest_such_dir = tree
             .immediate_directory_subdirectories
             .keys()
-            .into_iter()
             .map(|dir| tree.get_directory_size(dir).unwrap_or(0))
             .filter(|&x| x >= need_to_free)
             .min()
             .unwrap();
-        writeln!(writer, 
+        writeln!(
+            writer,
             "Size of smallest dir to free enough space: {}",
             smallest_such_dir
-        ).unwrap();
+        )
+        .unwrap();
     }
 }

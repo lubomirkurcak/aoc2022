@@ -1,7 +1,7 @@
 use std::{collections::HashMap, io::prelude::*, io::BufReader};
 
-use lk_math::{expr::Expression, math::*};
 use crate::Problem;
+use lk_math::{expr::Expr, math::*};
 
 type MonkeyId = usize;
 type WorryLevel = i64;
@@ -9,7 +9,7 @@ type WorryLevel = i64;
 struct Monkey {
     items: Vec<WorryLevel>,
     #[allow(clippy::type_complexity)]
-    operation: Box<dyn Fn(&HashMap<String, Expression<WorryLevel>>) -> WorryLevel>,
+    operation: Box<dyn Fn(&HashMap<String, Expr<WorryLevel>>) -> WorryLevel>,
     test: Box<dyn Fn(WorryLevel) -> bool>,
     target_if_true: MonkeyId,
     target_if_false: MonkeyId,
@@ -38,8 +38,8 @@ impl Monkey {
             let line = lines.next().unwrap();
             let operation = line.split("Operation:").collect::<Vec<&str>>()[1];
             let operation = operation.trim().split('=').collect::<Vec<&str>>()[1];
-            let expression = Expression::from_str(operation);
-            let operation = Box::new(move |vals: &HashMap<_, _>| expression.eval(vals).unwrap());
+            let expr: Expr<i64> = operation.parse().unwrap();
+            let operation = Box::new(move |vals: &HashMap<_, _>| expr.eval(vals).unwrap());
 
             let line = lines.next().unwrap();
             let divisible_by: WorryLevel = line.split("Test: divisible by").collect::<Vec<&str>>()
@@ -119,7 +119,7 @@ impl<const D: WorryLevel, const R: usize> Problem for Day11<D, R> {
                     .items
                     .drain(..)
                     .map(|x| {
-                        let vals = HashMap::from([("old".into(), Expression::Const(x))]);
+                        let vals = HashMap::from([("old".into(), Expr::Const(x))]);
                         ((monkey.operation)(&vals) / D) % modulo
                     })
                     .partition(|x| (monkey.test)(*x));

@@ -1,4 +1,4 @@
-use std::{io::prelude::*, io::BufReader, ops::Index};
+use std::io::BufReader;
 
 use crate::{Day, Problem};
 use lk_math::{
@@ -6,7 +6,7 @@ use lk_math::{
     explore::{Exploration, ExploreSignals},
     geometric_traits::IterateNeighbours,
     math::Gcd,
-    sketch::{QueueBag, StackBag},
+    sketch::QueueBag,
     vector::{V2i32, Vector},
 };
 
@@ -137,7 +137,7 @@ impl Problem for Day<24> {
         println!("Map size: {}x{}", map.width(), map.height());
 
         let start = map.find(&'.').unwrap();
-        let end = map.find_last(&'.').unwrap();
+        // let end = map.find_last(&'.').unwrap();
         let blizz = BlizzardMap::from_map(map);
         let awdlijalwijd = blizz.at_time(100);
 
@@ -147,7 +147,7 @@ impl Problem for Day<24> {
         let mut exp = Exploration::new(blizz.map.clone(), blizz);
         exp.explore::<_, _, QueueBag<_>>(
             Point { p: start, t: 0 },
-            |p, map, blizz| {
+            |p, map, _blizz| {
                 if p.p.x() > 3 || p.p.y() > 3 {
                     println!("{:?}", p);
                 }
@@ -159,7 +159,7 @@ impl Problem for Day<24> {
                     ExploreSignals::Explore
                 }
             },
-            |p, n, map, blizz| {
+            |_p, n, _map, blizz| {
                 let map_at_time = blizz.at_time(n.t);
                 let n_standing_on = map_at_time.get(n.p).unwrap();
                 n_standing_on == &'.'

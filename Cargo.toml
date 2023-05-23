@@ -6,8 +6,11 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-lk_math = "0.2.0"
 ndarray = "0.15.6"
+
+[dependencies.lk_math]
+version = "0.3.0"
+#path = "C:/users/lubo/personal/lk_math"
 
 # [build]
 # target = ["x86_64-pc-windows-msvc"]

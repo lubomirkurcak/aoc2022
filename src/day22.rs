@@ -35,7 +35,7 @@ fn parse_instructions(s: &str) -> Vec<Instruction> {
     let mut results = vec![];
     let mut acc = vec![];
     for c in s.chars() {
-        if ('0'..='9').contains(&c) {
+        if c.is_ascii_digit() {
             acc.push(c);
         } else {
             if !acc.is_empty() {
@@ -105,24 +105,24 @@ impl Face {
     fn find_edge(&self, vertset: &HashSet<Vert>) -> Option<FaceEdge> {
         FaceEdge::iter().find(|x| self.is_edge(*x, vertset))
     }
-    fn has_vert(&self, vert: &Vert) -> bool {
-        self.0.iter().any(|x| x == vert)
-    }
-    fn get_opposite_vert_mut(&mut self, vert: &Vert) -> Option<&mut Vert> {
-        let a = self.iter().position(|x| x == vert);
-        match a {
-            Some(a) => Some(
-                &mut self.0[match a {
-                    0 => 3,
-                    1 => 2,
-                    2 => 1,
-                    3 => 0,
-                    _ => panic!(),
-                }],
-            ),
-            None => None,
-        }
-    }
+    // fn has_vert(&self, vert: &Vert) -> bool {
+    //     self.0.iter().any(|x| x == vert)
+    // }
+    // fn get_opposite_vert_mut(&mut self, vert: &Vert) -> Option<&mut Vert> {
+    //     let a = self.iter().position(|x| x == vert);
+    //     match a {
+    //         Some(a) => Some(
+    //             &mut self.0[match a {
+    //                 0 => 3,
+    //                 1 => 2,
+    //                 2 => 1,
+    //                 3 => 0,
+    //                 _ => panic!(),
+    //             }],
+    //         ),
+    //         None => None,
+    //     }
+    // }
     fn get_opposite_vert(&self, vert: &Vert) -> Option<&Vert> {
         let a = self.iter().position(|x| x == vert);
         match a {
@@ -141,17 +141,17 @@ impl Face {
     fn iter(&self) -> impl Iterator<Item = &Vert> + '_ {
         self.0.iter()
     }
-    fn to_set(&self) -> HashSet<Vert> {
+    fn get_set(&self) -> HashSet<Vert> {
         self.iter().cloned().collect()
     }
     fn intersection(&self, other: &Self) -> HashSet<Vert> {
-        self.to_set()
-            .intersection(&other.to_set())
+        self.get_set()
+            .intersection(&other.get_set())
             .cloned()
             .collect()
     }
     fn shares_edge(&self, other: &Self) -> bool {
-        self.intersection(&other).len() == 2
+        self.intersection(other).len() == 2
     }
 }
 
@@ -211,7 +211,7 @@ fn solve_cube_minimap(
     let original_faces = face_ps
         .into_iter()
         .map(|p| {
-            let p = p.try_into().unwrap();
+            let p = p;
             let a = vert_grid_size.index_unchecked(p).unwrap();
             let b = vert_grid_size
                 .index_unchecked(p + V2::from_xy(1, 0))
@@ -322,7 +322,7 @@ impl<const B: bool, const C: usize> Problem for Day22<B, C> {
             a
         });
         assert!(map.clone().all(|x| x.len() == map_width));
-        let mut map = Array2d {
+        let map = Array2d {
             data: map.clone().collect::<Vec<_>>().concat().chars().collect(),
             dims: [map_width, map.clone().count()],
             dim_strides: [1, map_width],
@@ -343,7 +343,7 @@ impl<const B: bool, const C: usize> Problem for Day22<B, C> {
         let mut teleport_stripes = vec![];
         let edges_to_glue = solve_cube_minimap(minimap);
         let mut map = map.padded(1, ' ');
-        for (index, (side1, side2, rot, a, b)) in edges_to_glue.into_iter().enumerate() {
+        for (_index, (side1, side2, rot, a, b)) in edges_to_glue.into_iter().enumerate() {
             let mut a = a.scale(C.try_into().unwrap()).offset(Vector::all(1));
             let mut b = b.scale(C.try_into().unwrap()).offset(Vector::all(1));
 

@@ -80,7 +80,7 @@ mod tests {
         day20::Day20,
         day22::Day22,
         day3::{Day3CommonItemInCompartments, Day3CommonItemInGroups},
-        day4::{Day4, OneFullyInsideAnotherOptimized, OneFullyInsideAnotherSimple, Overlap},
+        day4::{Day4, OneFullyInsideAnother, Overlap},
         day5::{CrateMover9000, CrateMover9001, Day5},
         day6::Day6,
         Day, Problem,
@@ -140,16 +140,7 @@ mod tests {
     #[test]
     fn day4_fullyinside() {
         let mut writer = std::io::Cursor::new(vec![]);
-        Day4::<OneFullyInsideAnotherSimple>::solve_file("in4.txt", &mut writer);
-        let output_raw = writer.into_inner();
-        let output = std::str::from_utf8(&output_raw).unwrap().trim();
-        assert!(output.contains("450"));
-    }
-
-    #[test]
-    fn day4_fullyinside_optimized() {
-        let mut writer = std::io::Cursor::new(vec![]);
-        Day4::<OneFullyInsideAnotherOptimized>::solve_file("in4.txt", &mut writer);
+        Day4::<OneFullyInsideAnother>::solve_file("in4.txt", &mut writer);
         let output_raw = writer.into_inner();
         let output = std::str::from_utf8(&output_raw).unwrap().trim();
         assert!(output.contains("450"));

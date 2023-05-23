@@ -1,5 +1,7 @@
 use std::{io::prelude::*, io::BufReader, marker::PhantomData};
 
+use lk_math::interval::{Interval, IntervalExt};
+
 use crate::Problem;
 
 trait IntervalRelation {
@@ -7,31 +9,32 @@ trait IntervalRelation {
     fn name() -> &'static str;
 }
 
-pub struct OneFullyInsideAnotherSimple;
-pub struct OneFullyInsideAnotherOptimized;
+pub struct OneFullyInsideAnother;
 pub struct Overlap;
 
-impl IntervalRelation for OneFullyInsideAnotherSimple {
+impl IntervalRelation for OneFullyInsideAnother {
     fn test(a0: i32, a1: i32, b0: i32, b1: i32) -> bool {
-        (a0 >= b0 && a1 <= b1) || (b0 >= a0 && b1 <= a1)
+        let a = a0..a1 + 1;
+        let b = b0..b1 + 1;
+        assert_eq!(
+            a.dominates_or_is_dominated_by(&b),
+            (a0 >= b0 && a1 <= b1) || (b0 >= a0 && b1 <= a1)
+        );
+        a.dominates_or_is_dominated_by(&b)
+        // (a0 >= b0 && a1 <= b1) || (b0 >= a0 && b1 <= a1)
     }
 
     fn name() -> &'static str {
         "One fully overlaps the other"
     }
 }
-impl IntervalRelation for OneFullyInsideAnotherOptimized {
-    fn test(a0: i32, a1: i32, b0: i32, b1: i32) -> bool {
-        (b0 - a0) * (b1 - a1) <= 0
-    }
-
-    fn name() -> &'static str {
-        "One fully overlaps the other, OPTIMIZED"
-    }
-}
 impl IntervalRelation for Overlap {
     fn test(a0: i32, a1: i32, b0: i32, b1: i32) -> bool {
-        a1 >= b0 && a0 <= b1
+        let a = a0..a1 + 1;
+        let b = b0..b1 + 1;
+        assert_eq!(a.overlaps(&b), a1 >= b0 && a0 <= b1);
+        a.overlaps(&b)
+        // a1 >= b0 && a0 <= b1
     }
 
     fn name() -> &'static str {
@@ -72,6 +75,7 @@ where
                             let a1 = a1.parse::<i32>().unwrap();
                             let b0 = b0.parse::<i32>().unwrap();
                             let b1 = b1.parse::<i32>().unwrap();
+
                             return Ok(match T::test(a0, a1, b0, b1) {
                                 true => 1,
                                 false => 0,

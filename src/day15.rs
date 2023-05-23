@@ -2,7 +2,8 @@ use std::{collections::HashSet, io::prelude::*, io::BufReader};
 
 use crate::Problem;
 use lk_math::{
-    geometric_traits::ManhattanDistance, interval_set::IntervalSet, math::InclusiveMin, vector::V2,
+    geometric_traits::ManhattanDistance, interval::InclusiveMin, interval_set::IntervalSet,
+    vector::V2,
 };
 
 fn parse_sensors_data<T>(reader: BufReader<T>) -> Vec<(V2<i32>, V2<i32>)>

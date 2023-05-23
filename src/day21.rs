@@ -1,7 +1,7 @@
 use std::{collections::HashMap, io::prelude::*, io::BufReader};
 
 use crate::{Day, Problem};
-use lk_math::expr::Expression;
+use lk_math::expr::Expr;
 
 impl Problem for Day<2101> {
     fn solve_buffer<T, W>(reader: BufReader<T>, writer: &mut W)
@@ -9,11 +9,11 @@ impl Problem for Day<2101> {
         T: std::io::Read,
         W: std::io::Write,
     {
-        let mut monkeys = HashMap::new();
+        let mut monkeys: HashMap<String, _> = HashMap::new();
 
         for line in reader.lines().map(|x| x.unwrap()) {
             let (a, b) = line.split_once(':').unwrap();
-            let expr = Expression::<i64>::from_str(b);
+            let expr = b.parse::<Expr<i64>>().unwrap();
             monkeys.insert(a.into(), expr);
         }
 
@@ -35,18 +35,16 @@ impl Problem for Day<2102> {
             let (a, b) = line.split_once(':').unwrap();
 
             let expr = match a {
-                "root" => Expression::from_str(&b.replace(['+', '-', '*', '/'], "=")),
-                "humn" => Expression::Free,
-                _ => Expression::<i64>::from_str(b),
+                "root" => b.replace(['+', '-', '*', '/'], "=").parse().unwrap(),
+                "humn" => Expr::Free,
+                _ => b.parse().unwrap(),
             };
 
             monkeys.insert(a.into(), expr);
         }
 
-        let forced = monkeys
-            .get("root")
-            .unwrap()
-            .force_result(true.into(), &monkeys);
+        let forced: HashMap<String, i64> =
+            monkeys.get("root").unwrap().solve(true.into(), &monkeys);
         println!("Forced: {:?}", forced);
 
         writeln!(writer, "{}", forced.get("humn").unwrap()).unwrap();

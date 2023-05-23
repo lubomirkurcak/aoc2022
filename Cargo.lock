@@ -18,9 +18,9 @@ checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 
 [[package]]
 name = "lk_math"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ccd63d0b15a5638a60054bd174574c1e7c102a65d5e471d3df98bf70fbca1bb7"
+checksum = "a172ebd367487dcef252540721a85979ed1d237a412a7ceb8576412641eb2f28"
 
 [[package]]
 name = "matrixmultiply"
