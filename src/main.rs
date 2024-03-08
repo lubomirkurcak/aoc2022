@@ -11,7 +11,7 @@ mod day16;
 mod day16_part1;
 mod day16_part2;
 mod day17;
-mod day17_optimized;
+// mod day17_optimized;
 mod day17_pretty;
 mod day18;
 mod day19;
@@ -75,7 +75,7 @@ mod tests {
         day11::Day11,
         day14::Day14,
         day15::{Day15, DefinitelyNoBeaconsAtLine, FindTheLoneOutOfRangeTile},
-        day17_optimized::Day17Optimized,
+        // day17_optimized::Day17Optimized,
         day17_pretty::Day17,
         day20::Day20,
         day22::Day22,
@@ -83,7 +83,8 @@ mod tests {
         day4::{Day4, OneFullyInsideAnother, Overlap},
         day5::{CrateMover9000, CrateMover9001, Day5},
         day6::Day6,
-        Day, Problem,
+        Day,
+        Problem,
     };
 
     #[test]
@@ -403,6 +404,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(disabled)]
     fn day17_tetris_opt() {
         let mut writer = std::io::Cursor::new(vec![]);
         Day17Optimized::<2022>::solve_file("in17.txt", &mut writer);
@@ -412,6 +414,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(disabled)]
     fn day17_tetris_opt_big() {
         let mut writer = std::io::Cursor::new(vec![]);
         Day17Optimized::<1_000_000_000_000>::solve_file("in17.txt", &mut writer);

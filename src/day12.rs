@@ -13,9 +13,9 @@ impl Problem for Day<1201> {
         T: std::io::Read,
         W: std::io::Write,
     {
-        let mut map = Array2d::from_buffer(reader);
-        let start = map.find(&'S').unwrap();
-        let end = map.find(&'E').unwrap();
+        let mut map = Array2d::from_buffer(reader).unwrap();
+        let start = map.find_item(&'S').unwrap();
+        let end = map.find_item(&'E').unwrap();
         map.set(start, 'a');
         map.set(end, 'z');
 
@@ -66,9 +66,9 @@ impl Problem for Day<1202> {
         T: std::io::Read,
         W: std::io::Write,
     {
-        let mut map = Array2d::from_buffer(reader);
-        let start = map.find(&'S').unwrap();
-        let end = map.find(&'E').unwrap();
+        let mut map = Array2d::from_buffer(reader).unwrap();
+        let start = map.find_item(&'S').unwrap();
+        let end = map.find_item(&'E').unwrap();
         map.set(start, 'a');
         map.set(end, 'z');
 

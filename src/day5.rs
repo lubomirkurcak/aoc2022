@@ -68,7 +68,7 @@ where
                             let index = index + 1;
 
                             if char != ' ' {
-                                stacks.entry(index).or_insert_with(Vec::new).push(char);
+                                stacks.entry(index).or_default().push(char);
                             }
                         }
                         Stages::ReadingInitialState

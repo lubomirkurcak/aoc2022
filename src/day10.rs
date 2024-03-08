@@ -104,7 +104,7 @@ impl Problem for Day<102> {
 
             let pixel_x_position = cycle % 40;
             let pixel_char = match pixel_x_position - x {
-                1 | 0 | -1 => '#',
+                -1..=1 => '#',
                 _ => '.',
             };
 

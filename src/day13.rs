@@ -94,32 +94,29 @@ impl Token {
 
 impl PartialEq for Token {
     fn eq(&self, other: &Self) -> bool {
-        match self.partial_cmp(other) {
-            Some(ordering) => match ordering {
-                std::cmp::Ordering::Less => false,
-                std::cmp::Ordering::Equal => true,
-                std::cmp::Ordering::Greater => false,
-            },
-            None => false,
+        match self.cmp(other) {
+            std::cmp::Ordering::Less => false,
+            std::cmp::Ordering::Equal => true,
+            std::cmp::Ordering::Greater => false,
         }
+    }
+}
+
+impl PartialOrd for Token {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
     }
 }
 
 impl Ord for Token {
     fn cmp(&self, other: &Self) -> Ordering {
-        self.partial_cmp(other).unwrap()
-    }
-}
-
-impl PartialOrd for Token {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         match self {
             Token::Value(val) => match other {
-                Token::Value(oval) => val.partial_cmp(oval),
-                Token::List(_) => self.make_list().partial_cmp(other),
+                Token::Value(oval) => val.cmp(oval),
+                Token::List(_) => self.make_list().cmp(other),
             },
             Token::List(list) => match other {
-                Token::Value(_) => self.partial_cmp(&other.make_list()),
+                Token::Value(_) => self.cmp(&other.make_list()),
                 Token::List(olist) => {
                     let mut a = list.iter();
                     let mut b = olist.iter();
@@ -133,7 +130,7 @@ impl PartialOrd for Token {
 
                         if let Some(c) = c {
                             if let Some(d) = d {
-                                match c.partial_cmp(d).unwrap() {
+                                match c.cmp(d) {
                                     std::cmp::Ordering::Equal => looping = true,
                                     a => list_ordering = a,
                                 }
@@ -145,7 +142,7 @@ impl PartialOrd for Token {
                         }
                     }
 
-                    Some(list_ordering)
+                    list_ordering
                 }
             },
         }

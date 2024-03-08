@@ -204,14 +204,13 @@ fn cube_wrap_rule_1(faces: &[Face]) -> HashMap<Vert, Vert> {
 fn solve_cube_minimap(
     minimap: Array2d<char>,
 ) -> Vec<(FaceEdge, FaceEdge, i32, LineV2i32, LineV2i32)> {
-    let face_ps = minimap.find_all(&'#');
+    let face_ps = minimap.find_all_items(&'#');
     let minimap_dims: V2i32 = V2::new(minimap.dims).try_into().unwrap();
     let vert_grid_size = minimap_dims + V2::from_xy(1, 1);
 
     let original_faces = face_ps
         .into_iter()
         .map(|p| {
-            let p = p;
             let a = vert_grid_size.index_unchecked(p).unwrap();
             let b = vert_grid_size
                 .index_unchecked(p + V2::from_xy(1, 0))
@@ -343,7 +342,7 @@ impl<const B: bool, const C: usize> Problem for Day22<B, C> {
         let mut teleport_stripes = vec![];
         let edges_to_glue = solve_cube_minimap(minimap);
         let mut map = map.padded(1, ' ');
-        for (_index, (side1, side2, rot, a, b)) in edges_to_glue.into_iter().enumerate() {
+        for (side1, side2, rot, a, b) in edges_to_glue.into_iter() {
             let mut a = a.scale(C.try_into().unwrap()).offset(Vector::all(1));
             let mut b = b.scale(C.try_into().unwrap()).offset(Vector::all(1));
 
@@ -361,8 +360,6 @@ impl<const B: bool, const C: usize> Problem for Day22<B, C> {
             }
 
             assert!(a.start.x() <= a.end.x() && a.start.y() <= a.end.y());
-
-            if a.start.x() == a.end.x() {}
 
             if b.start.x() <= b.end.x() && b.start.y() <= b.end.y() {
                 // ok
@@ -386,7 +383,7 @@ impl<const B: bool, const C: usize> Problem for Day22<B, C> {
             map.dims[1].try_into().unwrap(),
         );
         let mut draw_map = map.clone();
-        let mut pos = map.find(&'.').unwrap();
+        let mut pos = map.find_item(&'.').unwrap();
         let mut rotation = Modi32::new(0);
         for instruction in instructions {
             println!("{:?}", instruction);

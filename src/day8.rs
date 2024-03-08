@@ -35,7 +35,7 @@ where
     results
 }
 
-fn visible_from_either_end(v: &Vec<char>) -> HashSet<usize> {
+fn visible_from_either_end(v: &[char]) -> HashSet<usize> {
     let mut visible = visible_from_start(v.iter());
     let from_right = visible_from_start(v.iter().rev())
         .iter()
@@ -190,6 +190,5 @@ impl Problem for Day<8> {
         let (x, y, score) = scenic;
 
         writeln!(writer, "Max scenic score: {}, at ({},{})", score, x, y).unwrap();
-
     }
 }

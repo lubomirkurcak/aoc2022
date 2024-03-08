@@ -9,8 +9,8 @@ edition = "2021"
 ndarray = "0.15.6"
 
 [dependencies.lk_math]
-version = "0.3.0"
-#path = "C:/users/lubo/personal/lk_math"
+#version = "0.3.0"
+path = "../lk_math"
 
 # [build]
 # target = ["x86_64-pc-windows-msvc"]

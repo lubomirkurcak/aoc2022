@@ -22,10 +22,10 @@ struct BlizzardMap {
 
 impl BlizzardMap {
     fn from_map(mut map: Array2d<char>) -> Self {
-        let right = map.find_all(&'>');
-        let up = map.find_all(&'^');
-        let left = map.find_all(&'<');
-        let down = map.find_all(&'v');
+        let right = map.find_all_items(&'>');
+        let up = map.find_all_items(&'^');
+        let left = map.find_all_items(&'<');
+        let down = map.find_all_items(&'v');
 
         map.replace_all(&'>', &'.');
         map.replace_all(&'^', &'.');
@@ -132,11 +132,11 @@ impl Problem for Day<24> {
         T: std::io::Read,
         W: std::io::Write,
     {
-        let map = Array2d::from_buffer(reader);
+        let map = Array2d::from_buffer(reader).unwrap();
 
         println!("Map size: {}x{}", map.width(), map.height());
 
-        let start = map.find(&'.').unwrap();
+        let start = map.find_item(&'.').unwrap();
         // let end = map.find_last(&'.').unwrap();
         let blizz = BlizzardMap::from_map(map);
         let awdlijalwijd = blizz.at_time(100);
