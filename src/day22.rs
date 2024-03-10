@@ -6,11 +6,9 @@ use std::{
 
 use crate::Problem;
 use lk_math::{
-    arraynd::Array2d,
-    line::{Line, LineV2i32},
-    linear_index::LinearIndex,
+    line::Line,
     modular::{Modi32, ModularAddAssign},
-    vector::{V2i32, Vector, V2},
+    prelude::*,
 };
 
 #[derive(Debug)]

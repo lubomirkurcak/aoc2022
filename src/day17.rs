@@ -1,4 +1,4 @@
-use lk_math::{line::LineV2i32, vector::V2};
+use lk_math::prelude::*;
 
 pub struct Rock;
 impl Rock {

@@ -2,12 +2,10 @@ use std::{io::prelude::*, io::BufReader, str::FromStr};
 
 use crate::Problem;
 use lk_math::{
-    aabb::Aabb2,
-    arraynd::Array2d,
-    geometric_traits::{CoverObject, Movement4Directions},
     line::Line,
+    prelude::*,
     transformations::{Transform, Translation},
-    vector::{Scalar, V2},
+    vector::Scalar,
 };
 
 pub struct Day14<const C: bool>;

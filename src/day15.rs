@@ -1,10 +1,7 @@
 use std::{collections::HashSet, io::prelude::*, io::BufReader};
 
 use crate::Problem;
-use lk_math::{
-    geometric_traits::ManhattanDistance, interval::InclusiveMin, interval_set::IntervalSet,
-    vector::V2,
-};
+use lk_math::{interval::InclusiveMin, interval_set::IntervalSet, prelude::*};
 
 fn parse_sensors_data<T>(reader: BufReader<T>) -> Vec<(V2<i32>, V2<i32>)>
 where

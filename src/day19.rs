@@ -2,8 +2,8 @@ use std::{io::prelude::*, io::BufReader, str::FromStr};
 
 use crate::Problem;
 use lk_math::{
+    prelude::*,
     explore::{Exploration, ExploreSignals},
-    geometric_traits::{IterateNeighbours, IterateNeighboursContext},
     sketch::StackBag,
 };
 

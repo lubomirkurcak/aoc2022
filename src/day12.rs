@@ -1,8 +1,8 @@
 use std::io::BufReader;
 
 use crate::{Day, Problem};
+use lk_math::prelude::*;
 use lk_math::{
-    arraynd::Array2d,
     explore::{Exploration, ExploreSignals},
     sketch::QueueBag,
 };

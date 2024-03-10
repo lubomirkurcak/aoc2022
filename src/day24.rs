@@ -2,12 +2,10 @@ use std::io::BufReader;
 
 use crate::{Day, Problem};
 use lk_math::{
-    arraynd::Array2d,
     explore::{Exploration, ExploreSignals},
-    geometric_traits::IterateNeighbours,
     math::Gcd,
+    prelude::*,
     sketch::QueueBag,
-    vector::{V2i32, Vector},
 };
 
 struct BlizzardMap {

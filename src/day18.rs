@@ -2,12 +2,10 @@ use std::{collections::HashSet, io::prelude::*, io::BufReader, str::FromStr};
 
 use crate::{Day, Problem};
 use lk_math::{
-    aabb::Aabb,
-    arraynd::Array3d,
     explore::{Exploration, ExploreSignals},
-    geometric_traits::CoverObject,
+    prelude::*,
     sketch::StackBag,
-    vector::{Scalar, V3},
+    vector::Scalar,
 };
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]

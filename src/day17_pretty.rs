@@ -2,12 +2,10 @@ use std::io::{BufRead, BufReader};
 
 use crate::{day17::Rock, Problem};
 use lk_math::{
-    arraynd::Array2d,
+    prelude::*,
     cli::Progress,
     explore::{Exploration, ExploreSignals},
-    line::LineV2i32,
     sketch::StackBag,
-    vector::V2,
 };
 
 pub struct Day17<const C: usize>;
